@@ -28,14 +28,18 @@ var adminCheck = message => {
 var activatedCheck = message => {
     return store.getItem('channelsActivated').indexOf(message.channel.id) >= 0;
 }
+var listOfUsers = listOfUserIds => {
+    var output = '';
+    for (var i = 0; i < listOfUserIds.length; i++) {
+        output += `\n${i + 1}. <@${listOfUserIds[i]}>`;
+    }
+    return output;
+}
 var printCurrentPlayers = channelId => {
     var currentGames = store.getItem('games');
     var gameInChannel = _.find(currentGames, {channelId: channelId});
     if (gameInChannel) {
-        var output = `Currently ${gameInChannel.playerIds.length} players in game hosted by <@${gameInChannel.hostId}>:`;
-        for (var i = 0; i < gameInChannel.playerIds.length; i++) {
-            output += `\n${i + 1}. <@${gameInChannel.playerIds[i]}>`;
-        }
+        var output = `Currently ${gameInChannel.playerIds.length} players in game hosted by <@${gameInChannel.hostId}>:${listOfUsers(gameInChannel.playerIds)}`;
         mafiabot.sendMessage(channelId, output);
         return true;
     }
@@ -89,6 +93,15 @@ var baseCommands = [
             } else {
                 mafiabot.reply(message, `MafiaBot is not activate on channel **#${message.channel.name}**! Use *##activatemafia* to activate MafiaBot on this channel.`);
             }
+        },
+    },
+    {
+        commands: ['admin', 'admins'],
+        description: 'Show list of admins for MafiaBot',
+        adminOnly: false,
+        activatedOnly: false,
+        onMessage: message => {
+            mafiabot.sendMessage(message.channel, `Admins of MafiaBot:${listOfUsers(config.admins)}`);
         },
     },
     {
@@ -157,6 +170,21 @@ var baseCommands = [
         },
     },
     {
+        commands: ['host', 'hosts'],
+        description: 'Show host of current game in channel',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var currentGames = store.getItem('games');
+            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            if (gameInChannel) {
+                mafiabot.sendMessage(message.channel, `Host of current game in channel:\n<@${gameInChannel.hostId}>`);
+            } else {
+                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);                
+            }
+        },
+    },
+    {
         commands: ['join', 'in'],
         description: 'Join the game in this channel as a player',
         adminOnly: false,
@@ -201,12 +229,32 @@ var baseCommands = [
         },
     },
     {
+        commands: ['player', 'players'],
+        description: 'Show current list of players of game in channel',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            if (!printCurrentPlayers(message.channel.id)) {
+                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);         
+            }
+        },
+    },
+    {
         commands: ['NL'],
         description: 'No lynch test',
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
             mafiabot.reply(message, "shad sucks lmao");
+        },
+    },
+    {
+        commands: ['catgirls'],
+        description: ':3',
+        adminOnly: true,
+        activatedOnly: true,
+        onMessage: message => {
+            mafiabot.reply(message, "nyaaaa~");
         },
     },
     {
@@ -219,7 +267,7 @@ var baseCommands = [
         },
     },
     {
-        commands: ['arg', 'argtest', ''],
+        commands: ['arg', 'argtest'],
         description: 'Arguments test',
         adminOnly: false,
         activatedOnly: true,
