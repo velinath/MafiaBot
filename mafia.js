@@ -9,6 +9,7 @@ var Discord = require('discord.js');
 store.initSync();
 var defaults = {
     channelsActivated: [],
+    games: [],
 };
 _.each(defaults, (val, key) => {
     var objWithDefaults = _.merge({}, {[key]: val}, {[key]: store.getItem(key)});
@@ -26,6 +27,19 @@ var adminCheck = message => {
 };
 var activatedCheck = message => {
     return store.getItem('channelsActivated').indexOf(message.channel.id) >= 0;
+}
+var printCurrentPlayers = channelId => {
+    var currentGames = store.getItem('games');
+    var gameInChannel = _.find(currentGames, {channelId: channelId});
+    if (gameInChannel) {
+        var output = `Currently ${gameInChannel.playerIds.length} players in game hosted by <@${gameInChannel.hostId}>:`;
+        for (var i = 0; i < gameInChannel.playerIds.length; i++) {
+            output += `\n${i + 1}. <@${gameInChannel.playerIds[i]}>`;
+        }
+        mafiabot.sendMessage(channelId, output);
+        return true;
+    }
+    return false;
 }
 
 // commands
@@ -57,7 +71,7 @@ var baseCommands = [
             } else {
                 currentChannels.push(message.channel.id);
                 store.setItem('channelsActivated', currentChannels);
-                mafiabot.reply(message, `MafiaBot has been activated on channel **#${message.channel.name}**! Use *##startgame* to start playing some mafia!`);
+                mafiabot.reply(message, `MafiaBot has been activated on channel **#${message.channel.name}**! Use *##creategame* to start playing some mafia!`);
             }
         },
     },
@@ -78,12 +92,112 @@ var baseCommands = [
         },
     },
     {
-        commands: ['startgame'],
-        description: 'Start a game and wait for players to join',
+        commands: ['creategame'],
+        description: 'Create a game in this channel and become the host',
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.reply(message, "Starting game of mafia!");
+            var currentGames = store.getItem('games');
+            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            if (gameInChannel) {
+                mafiabot.reply(message, `A game is already running in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>!`);
+            } else {
+                gameInChannel = {
+                    channelId: message.channel.id,
+                    hostId: message.author.id,
+                    playerIds: [],
+                    started: false,
+                    votesToEndGame: [],
+                };
+                currentGames.push(gameInChannel);
+                store.setItem('games', currentGames);
+                mafiabot.sendMessage(message.channel, `Starting a game of mafia in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>!`);
+            }
+        },
+    },
+    {
+        commands: ['endgame'],
+        description: 'Current host, admin, or majority of players can end the game in this channel',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var currentGames = store.getItem('games');
+            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var endGame = becauseOf => {
+                _.remove(currentGames, gameInChannel);
+                store.setItem('games', currentGames);
+                mafiabot.sendMessage(message.channel, `${becauseOf} ended game of mafia in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>! 😥`);
+            };
+            if (gameInChannel) {
+                if (gameInChannel.hostId == message.author.id) {
+                    endGame(`Host <@${message.author.id}>`);
+                } else if (config.admins.indexOf(message.author.id) >= 0) {
+                    endGame(`Admin <@${message.author.id}>`);
+                } else if (gameInChannel.playerIds.indexOf(message.author.id) >= 0) {
+                    if (gameInChannel.votesToEndGame.indexOf(message.author.id) >= 0) {
+                        mafiabot.reply(message, `We already know you want to end the current game hosted by <@${gameInChannel.hostId}>!`);
+                    } else {
+                        gameInChannel.votesToEndGame.push(message.author.id);
+                        store.setItem('games', currentGames);
+                        mafiabot.reply(message, `You voted to end the current game hosted by <@${gameInChannel.hostId}>!`);
+                        
+                        var votesRemaining = Math.ceil(gameInChannel.playerIds.length/2) - gameInChannel.votesToEndGame.length;
+                        if (votesRemaining <= 0) {
+                            endGame('A majority vote of the players');
+                        } else {
+                            mafiabot.sendMessage(message.channel, `There are currently ${gameInChannel.votesToEndGame.length} votes to end the current game hosted by <@${gameInChannel.hostId}>. ${votesRemaining} votes remaining!`);
+                        }
+                    }
+                } else {
+                    mafiabot.reply(message, `Only admins, hosts, and joined players can end a game!`);
+                }
+            } else {
+                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);
+            }
+        },
+    },
+    {
+        commands: ['join', 'in'],
+        description: 'Join the game in this channel as a player',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var currentGames = store.getItem('games');
+            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            if (gameInChannel) {
+                if (gameInChannel.playerIds.indexOf(message.author.id) >= 0) {
+                    mafiabot.reply(message, `You are already in the current game hosted by <@${gameInChannel.hostId}>!`);
+                } else {
+                    gameInChannel.playerIds.push(message.author.id);
+                    store.setItem('games', currentGames);
+                    mafiabot.sendMessage(message.channel, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
+                }
+                printCurrentPlayers(message.channel.id);
+            } else {
+                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);
+            }
+        },
+    },
+    {
+        commands: ['unjoin', 'out', 'leave'],
+        description: 'Leave the game in this channel, if you were joined',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var currentGames = store.getItem('games');
+            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            if (gameInChannel) {
+                if (gameInChannel.playerIds.indexOf(message.author.id) >= 0) {
+                    _.pull(gameInChannel.playerIds, message.author.id);
+                    store.setItem('games', currentGames);
+                    mafiabot.sendMessage(message.channel, `<@${message.author.id}> left the current game hosted by <@${gameInChannel.hostId}>!`);
+                } else {
+                    mafiabot.reply(message, `You are not currently in the current game hosted by <@${gameInChannel.hostId}>!`);
+                }
+                printCurrentPlayers(message.channel.id);
+            } else {
+                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);
+            }
         },
     },
     {
