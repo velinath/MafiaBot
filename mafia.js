@@ -238,7 +238,7 @@ mafiabot.on("message", message => {
         if (contentLower.indexOf(commandPrefix) == 0) {
             var commandMatch = false;
             for (var c = 0; c < comm.commands.length; c++) {
-                commandMatch |= contentLower.indexOf(comm.commands[c]) == commandPrefix.length;
+                commandMatch |= contentLower.indexOf(comm.commands[c].toLowerCase()) == commandPrefix.length;
             }
             if (commandMatch) {
                 if (!comm.adminOnly || adminCheck(message)) {
