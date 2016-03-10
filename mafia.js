@@ -28,6 +28,7 @@ var activatedCheck = message => {
     return store.getItem('channelsActivated').indexOf(message.channel.id) >= 0;
 }
 
+// set up discord events
 mafiabot.on("message", message => {
     var contentLower = message.content.toLowerCase();
     if (contentLower.indexOf('##activatemafia') == 0) {
