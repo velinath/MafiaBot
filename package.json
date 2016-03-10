@@ -1,0 +1,30 @@
+{
+  "name": "mafiabot",
+  "version": "0.1.0",
+  "description": "Discord bot for playing Mafia",
+  "main": "mafia.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://foolmoron@github.com/foolmoron/MafiaBot.git"
+  },
+  "keywords": [
+    "mafia",
+    "game",
+    "bot",
+    "discord",
+    "foolmoron",
+    "b8"
+  ],
+  "author": "foolmoron",
+  "license": "CC-BY-NC-4.0",
+  "bugs": {
+    "url": "https://github.com/foolmoron/MafiaBot/issues"
+  },
+  "homepage": "https://github.com/foolmoron/MafiaBot#readme",
+  "dependencies": {
+    "discord.js": "^6.0.0"
+  }
+}
