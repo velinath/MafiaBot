@@ -101,7 +101,16 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.reply(message, "yes I agree <@88020438474567680> is the best user");     
+            mafiabot.reply(message, "yes I agree <@88020438474567680> is the best user");
+        },
+    },
+    {
+        commands: ['arg', 'argtest', ''],
+        description: 'Arguments test',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: (message, args) => {
+            mafiabot.reply(message, `Given args: ${args.join(' - ')}`);
         },
     },
 ];
@@ -120,7 +129,8 @@ mafiabot.on("message", message => {
             if (commandMatch) {
                 if (!comm.adminOnly || adminCheck(message)) {
                     if (!comm.activatedOnly || activatedCheck(message)) {
-                        comm.onMessage(message);
+                        var args = message.content.split(/[ :]/);
+                        comm.onMessage(message, args);
                     }
                 }
                 break;
