@@ -25,6 +25,8 @@
   },
   "homepage": "https://github.com/foolmoron/MafiaBot#readme",
   "dependencies": {
-    "discord.js": "^6.0.0"
+    "discord.js": "^6.0.0",
+    "lodash": "^4.6.1",
+    "node-persist": "0.0.8"
   }
 }
