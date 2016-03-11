@@ -77,6 +77,41 @@ var baseCommands = [
         },
     },
     {
+        commands: ['admin', 'admins'],
+        description: 'Show list of admins for MafiaBot',
+        adminOnly: false,
+        activatedOnly: false,
+        onMessage: message => {
+            mafiabot.sendMessage(message.channel, `Admins of MafiaBot:${listUsers(config.admins)}`);
+        },
+    },
+    {
+        commands: ['host', 'hosts'],
+        description: 'Show host of current game in channel',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var currentGames = store.getItem('games');
+            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            if (gameInChannel) {
+                mafiabot.sendMessage(message.channel, `Host of current game in channel:\n<@${gameInChannel.hostId}>`);
+            } else {
+                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);                
+            }
+        },
+    },
+    {
+        commands: ['player', 'players'],
+        description: 'Show current list of players of game in channel',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            if (!printCurrentPlayers(message.channel.id)) {
+                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);         
+            }
+        },
+    },
+    {
         commands: ['activatemafia'],
         description: 'Activate MafiaBot on this channel',
         adminOnly: true,
@@ -106,15 +141,6 @@ var baseCommands = [
             } else {
                 mafiabot.reply(message, `MafiaBot is not activate on channel **#${message.channel.name}**! Use *##activatemafia* to activate MafiaBot on this channel.`);
             }
-        },
-    },
-    {
-        commands: ['admin', 'admins'],
-        description: 'Show list of admins for MafiaBot',
-        adminOnly: false,
-        activatedOnly: false,
-        onMessage: message => {
-            mafiabot.sendMessage(message.channel, `Admins of MafiaBot:${listUsers(config.admins)}`);
         },
     },
     {
@@ -217,21 +243,6 @@ var baseCommands = [
         },
     },
     {
-        commands: ['host', 'hosts'],
-        description: 'Show host of current game in channel',
-        adminOnly: false,
-        activatedOnly: true,
-        onMessage: message => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
-            if (gameInChannel) {
-                mafiabot.sendMessage(message.channel, `Host of current game in channel:\n<@${gameInChannel.hostId}>`);
-            } else {
-                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);                
-            }
-        },
-    },
-    {
         commands: ['join', 'in'],
         description: 'Join the game in this channel as a player',
         adminOnly: false,
@@ -280,23 +291,22 @@ var baseCommands = [
         },
     },
     {
-        commands: ['player', 'players'],
-        description: 'Show current list of players of game in channel',
+        commands: ['vote', 'lynch'],
+        description: 'Vote to lynch a player',
+        default: true,
         adminOnly: false,
         activatedOnly: true,
-        onMessage: message => {
-            if (!printCurrentPlayers(message.channel.id)) {
-                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);         
-            }
+        onMessage: (message, args) => {
+            mafiabot.reply(message, `You voted for ${args[1]}!`);
         },
     },
     {
-        commands: ['NL'],
-        description: 'No lynch test',
+        commands: ['unvote', 'unlynch', 'un'],
+        description: 'Vote to lynch a player',
         adminOnly: false,
         activatedOnly: true,
-        onMessage: message => {
-            mafiabot.reply(message, "shad sucks lmao");
+        onMessage: (message, args) => {
+            mafiabot.reply(message, `You unvoted!`);
         },
     },
     {
@@ -332,14 +342,16 @@ var baseCommands = [
 mafiabot.on("message", message => {
     var contentLower = message.content.toLowerCase();
     // go through all the base commands and see if any of them have been called
-    for (var i = 0; i < baseCommands.length; i++) {
-        var comm = baseCommands[i];
-        if (contentLower.indexOf(commandPrefix) == 0) {
-            var commandMatch = false;
+    if (contentLower.indexOf(commandPrefix) == 0) {
+        var anyCommandMatched = false;
+        for (var i = 0; i < baseCommands.length; i++) {
+            var comm = baseCommands[i];
+            var commandMatched = false;
             for (var c = 0; c < comm.commands.length; c++) {
-                commandMatch |= contentLower.indexOf(comm.commands[c].toLowerCase()) == commandPrefix.length;
+                commandMatched |= contentLower.indexOf(comm.commands[c].toLowerCase()) == commandPrefix.length;
             }
-            if (commandMatch) {
+            anyCommandMatched |= commandMatched;
+            if (commandMatched) {
                 if (!comm.adminOnly || adminCheck(message)) {
                     if (!comm.activatedOnly || activatedCheck(message)) {
                         var args = message.content.split(/[ :]/);
@@ -347,6 +359,20 @@ mafiabot.on("message", message => {
                     }
                 }
                 break;
+            }
+        }
+        // call default command if no command was matched, but there was still a command prefix (like '##xxx')
+        if (!anyCommandMatched) {
+            var defaultComm = _.find(baseCommands, {default: true});
+            if (defaultComm) {
+                if (!defaultComm.adminOnly || adminCheck(message)) {
+                    if (!defaultComm.activatedOnly || activatedCheck(message)) {
+                        // args needs to be slightly modified for default commands (so '##xxx' has args ['##', 'xxx'])
+                        var args = [commandPrefix].concat(message.content.split(/[ :]/));
+                        args[1] = args[1].substring(commandPrefix.length);
+                        defaultComm.onMessage(message, args);
+                    }
+                }                
             }
         }
     }
