@@ -465,9 +465,9 @@ mafiabot.on("message", message => {
             var comm = baseCommands[i];
             var commandMatched = false;
             for (var c = 0; c < comm.commands.length; c++) {
-                commandMatched |= contentLower.indexOf(comm.commands[c].toLowerCase()) == commandPrefix.length;
+                commandMatched = commandMatched || (contentLower.indexOf(comm.commands[c].toLowerCase()) == commandPrefix.length);
             }
-            anyCommandMatched |= commandMatched;
+            anyCommandMatched = anyCommandMatched || commandMatched;
             if (commandMatched) {
                 if (!comm.adminOnly || adminCheck(message)) {
                     if (!comm.activatedOnly || activatedCheck(message)) {
@@ -489,7 +489,7 @@ mafiabot.on("message", message => {
                         args[1] = args[1].substring(commandPrefix.length);
                         defaultComm.onMessage(message, args);
                     }
-                }                
+                }
             }
         }
     }
