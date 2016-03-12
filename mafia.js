@@ -18,6 +18,9 @@ _.each(defaults, (val, key) => {
 var mafiabot = new Discord.Client();
 
 // utilities
+var s = (num, str, pluralString, singleString) => {
+    return num + ' ' + str + (num == 1 ? (singleString || '') : (pluralString || 's'));
+}
 var adminCheck = message => {
     if (config.admins.indexOf(message.author.id) >= 0) {
         return true;
@@ -42,7 +45,7 @@ var printCurrentPlayers = channelId => {
     var currentGames = store.getItem('games');
     var gameInChannel = _.find(currentGames, {channelId: channelId});
     if (gameInChannel) {
-        var output = `Currently ${gameInChannel.players.length} players in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(gameInChannel.players, 'id'))}`;
+        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(gameInChannel.players, 'id'))}`;
         mafiabot.sendMessage(channelId, output);
         return true;
     }
@@ -54,7 +57,7 @@ var printUnconfirmedPlayers = channelId => {
     if (gameInChannel) {
         var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
         var output = unconfirmedPlayers.length 
-            ? `${unconfirmedPlayers.length} players still need to ##confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
+            ? `${s(unconfirmedPlayers.length, 'player')} still need to ##confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
         mafiabot.sendMessage(channelId, output);
@@ -66,7 +69,7 @@ var printAlivePlayers = channelId => {
     var currentGames = store.getItem('games');
     var gameInChannel = _.find(currentGames, {channelId: channelId});
     if (gameInChannel) {
-        var output = `Currently ${_.filter(gameInChannel.players, 'alive').length} players alive in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(_.filter(gameInChannel.players, 'alive'), 'id'))}`;
+        var output = `Currently ${s(_.filter(gameInChannel.players, 'alive').length, 'player')} alive in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(_.filter(gameInChannel.players, 'alive'), 'id'))}`;
         mafiabot.sendMessage(channelId, output);
         return true;
     }
@@ -253,7 +256,7 @@ var baseCommands = [
                         if (votesRemaining <= 0) {
                             endGame('A majority vote of the players');
                         } else {
-                            mafiabot.sendMessage(message.channel, `There are currently ${gameInChannel.votesToEndGame.length} votes to end the current game hosted by <@${gameInChannel.hostId}>. ${votesRemaining} votes remaining!`);
+                            mafiabot.sendMessage(message.channel, `There are currently ${s(gameInChannel.votesToEndGame.length, 'vote')} to end the current game hosted by <@${gameInChannel.hostId}>. ${s(votesRemaining, 'vote')} remaining!`);
                         }
                     }
                 } else {
