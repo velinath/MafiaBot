@@ -59,13 +59,23 @@ var printUnconfirmedPlayers = channelId => {
     }
     return false;
 }
+var printAlivePlayers = channelId => {
+    var currentGames = store.getItem('games');
+    var gameInChannel = _.find(currentGames, {channelId: channelId});
+    if (gameInChannel) {
+        var output = `Currently ${_.filter(gameInChannel.players, 'alive').length} players alive in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(_.filter(gameInChannel.players, 'alive'), 'id'))}`;
+        mafiabot.sendMessage(channelId, output);
+        return true;
+    }
+    return false;
+}
 var printDayState = channelId => {
     var currentGames = store.getItem('games');
     var gameInChannel = _.find(currentGames, {channelId: channelId});
     if (gameInChannel && gameInChannel.day > 0) {
         mafiabot.sendMessage(channelId, 
 `It is currently **${gameInChannel.state == STATE.DAY ? 'DAY' : 'NIGHT'} ${gameInChannel.day}** in game hosted by <@${gameInChannel.hostId}>!
-**${gameInChannel.players.length} alive, ${Math.ceil(gameInChannel.players.length/2)} to lynch!**
+**${_.filter(gameInChannel.players, 'alive').length} alive, ${Math.ceil(_.filter(gameInChannel.players, 'alive').length/2)} to lynch!**
 Use ##vote, ##NL, and ##unvote commands to vote.`
             );
         return true;
@@ -82,7 +92,7 @@ var printCurrentVotes = channelId => {
             voteOutput += `\n(${votesByTarget[i].length}) <@${votesByTarget[i][0].targetId}>: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '<@' + vote.playerId + '>'; }).join(', ')}`;
         }
         mafiabot.sendMessage(channelId,
-`**${gameInChannel.players.length} alive, ${Math.ceil(gameInChannel.players.length/2)} to lynch!**
+`**${_.filter(gameInChannel.players, 'alive').length} alive, ${Math.ceil(_.filter(gameInChannel.players, 'alive').length/2)} to lynch!**
 Use ##vote, ##NL, and ##unvote commands to vote.${voteOutput}`
             );
         return true;
@@ -266,7 +276,7 @@ var baseCommands = [
                         mafiabot.sendMessage(message.channel, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **##confirm** in this channel to confirm your role.`);
                         printCurrentPlayers(message.channel.id);
                         for (var i = 0; i < gameInChannel.players.length; i++) {
-                            mafiabot.sendMessage(_.find(mafiabot.users, {id: message.author.id}), `Your role is ______. Type **##confirm** in channel *#${message.channel.name}* to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                            mafiabot.sendMessage(_.find(mafiabot.users, {id: gameInChannel.players[i].id}), `Your role is ______. Type **##confirm** in channel *#${message.channel.name}* to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                         }
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
@@ -378,17 +388,42 @@ var baseCommands = [
             var currentGames = store.getItem('games');
             var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
             if (gameInChannel && gameInChannel.state == STATE.DAY) {
-                if (_.find(gameInChannel.players, {id: message.author.id})) {
+                var player = _.find(gameInChannel.players, {id: message.author.id});
+                if (player && player.alive) {
                     var target = _.find(gameInChannel.players, {id: (args[1] || '').replace(/[\<\@\>]/g, '')});
                     if (target) {
-                        _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
-                        gameInChannel.votes.push({playerId: message.author.id, targetId: target.id, time: new Date()});
-                        mafiabot.sendMessage(message.channel, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
-                        printCurrentVotes(message.channel.id);
-                        store.setItem('games', currentGames);
+                        if (!target.alive) {
+                            mafiabot.reply(message, `You can't vote for the dead player ${args[1]}'!`);
+                        } else if (target.id == message.author.id) {
+                            mafiabot.reply(message, `You can't vote for yourself!`);
+                        } else {
+                            _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
+                            gameInChannel.votes.push({playerId: message.author.id, targetId: target.id, time: new Date()});
+                            mafiabot.sendMessage(message.channel, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
+
+                            // check for lynch
+                            var votesRequired = Math.ceil(_.filter(gameInChannel.players, 'alive').length/2);
+                            var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
+                            for (var targetId in votesByTarget) {
+                                if (votesByTarget[targetId].length >= votesRequired) {
+                                    mafiabot.sendMessage(message.channel, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                                    mafiabot.sendMessage(message.channel, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                                    mafiabot.sendMessage(message.channel, `<@${targetId}> was lynched. It is now night.`);
+                                    _.find(gameInChannel.players, {id: targetId}).alive = false;
+                                    gameInChannel.day++;
+                                    gameInChannel.votes.length = 0;
+                                    store.setItem('games', currentGames);
+                                    printAlivePlayers(message.channel.id);
+                                    printDayState(message.channel.id);
+                                    break;
+                                }
+                            }
+                        }
                     } else {
                         mafiabot.reply(message, `'${args[1]}' is not a valid vote target!`);
                     }
+                    printCurrentVotes(message.channel.id);
+                    store.setItem('games', currentGames);
                 }
             }
         },
@@ -402,7 +437,8 @@ var baseCommands = [
             var currentGames = store.getItem('games');
             var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
             if (gameInChannel && gameInChannel.state == STATE.DAY) {
-                if (_.find(gameInChannel.players, {id: message.author.id})) {
+                var player = _.find(gameInChannel.players, {id: message.author.id});
+                if (player && player.alive) {
                     var vote = _.find(gameInChannel.votes, {playerId: message.author.id});
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                     var targetString = vote ? ` <@${vote.targetId}>` : '... nothing';
