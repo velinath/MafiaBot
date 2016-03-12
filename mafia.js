@@ -9,6 +9,7 @@ var Discord = require('discord.js');
 store.initSync();
 var defaults = {
     channelsActivated: [],
+    pmChannels: [],
     games: [],
 };
 _.each(defaults, (val, key) => {
@@ -310,7 +311,10 @@ var baseCommands = [
             var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
             if (gameInChannel) {
                 if (gameInChannel.state == STATE.INIT) {
-                    if (_.find(gameInChannel.players, {id: message.author.id})) {
+                    var pmChannels = store.getItem('pmChannels');
+                    if (!_.find(pmChannels, {playerId: message.author.id})) {
+                        mafiabot.reply(message, `You need to send me a private message to open up a direct channel of communication between us before you can join a game!`);                        
+                    } else if (_.find(gameInChannel.players, {id: message.author.id})) {
                         mafiabot.reply(message, `You are already in the current game hosted by <@${gameInChannel.hostId}>!`);
                     } else {
                         var newPlayer = {
@@ -520,6 +524,16 @@ mafiabot.on("message", message => {
                     }
                 }                
             }
+        }
+    }
+
+    // receiving a PM
+    if (message.channel.recipient) {
+        var pmChannels = store.getItem('pmChannels');
+        if (!_.find(pmChannels, {playerId: message.channel.recipient.id})) {
+            pmChannels.push({playerId: message.channel.recipient.id, channelId: message.channel.id});
+            store.setItem('pmChannels', pmChannels);
+            mafiabot.reply(message, 'Thanks for the one-time private message to open a direct channel of communication between us! You can join and play mafia games on this server.');
         }
     }
 });
