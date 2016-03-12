@@ -35,6 +35,9 @@ var listUsers = listOfUserIds => {
     }
     return output;
 }
+var majorityOf = listOfPlayers => {
+    return Math.ceil(_.filter(gameInChannel.players, 'alive').length / 2 + 0.1);
+}
 var printCurrentPlayers = channelId => {
     var currentGames = store.getItem('games');
     var gameInChannel = _.find(currentGames, {channelId: channelId});
@@ -75,7 +78,7 @@ var printDayState = channelId => {
     if (gameInChannel && gameInChannel.day > 0) {
         mafiabot.sendMessage(channelId, 
 `It is currently **${gameInChannel.state == STATE.DAY ? 'DAY' : 'NIGHT'} ${gameInChannel.day}** in game hosted by <@${gameInChannel.hostId}>!
-**${_.filter(gameInChannel.players, 'alive').length} alive, ${Math.ceil(_.filter(gameInChannel.players, 'alive').length/2)} to lynch!**
+**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(gameInChannel.players)} to lynch!**
 Use ##vote, ##NL, and ##unvote commands to vote.`
             );
         return true;
@@ -92,7 +95,7 @@ var printCurrentVotes = channelId => {
             voteOutput += `\n(${votesByTarget[i].length}) <@${votesByTarget[i][0].targetId}>: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '<@' + vote.playerId + '>'; }).join(', ')}`;
         }
         mafiabot.sendMessage(channelId,
-`**${_.filter(gameInChannel.players, 'alive').length} alive, ${Math.ceil(_.filter(gameInChannel.players, 'alive').length/2)} to lynch!**
+`**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(gameInChannel.players)} to lynch!**
 Use ##vote, ##NL, and ##unvote commands to vote.${voteOutput}`
             );
         return true;
@@ -246,7 +249,7 @@ var baseCommands = [
                         store.setItem('games', currentGames);
                         mafiabot.reply(message, `You voted to end the current game hosted by <@${gameInChannel.hostId}>!`);
                         
-                        var votesRemaining = Math.ceil(gameInChannel.players.length/2) - gameInChannel.votesToEndGame.length;
+                        var votesRemaining = majorityOf(gameInChannel.players) - gameInChannel.votesToEndGame.length;
                         if (votesRemaining <= 0) {
                             endGame('A majority vote of the players');
                         } else {
@@ -402,7 +405,7 @@ var baseCommands = [
                             mafiabot.sendMessage(message.channel, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
 
                             // check for lynch
-                            var votesRequired = Math.ceil(_.filter(gameInChannel.players, 'alive').length/2);
+                            var votesRequired = majorityOf(gameInChannel.players);
                             var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
                             for (var targetId in votesByTarget) {
                                 if (votesByTarget[targetId].length >= votesRequired) {
