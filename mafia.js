@@ -340,7 +340,6 @@ var baseCommands = [
     {
         commands: ['confirm'],
         description: 'Confirm your role and your participation in the game',
-        default: true,
         adminOnly: false,
         activatedOnly: true,
         onMessage: (message, args) => {
