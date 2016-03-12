@@ -12,7 +12,7 @@ var data = _.merge({
     pmChannels: [],
     games: [],
 }, store.getItem('data'));
-store.setItem('data');
+store.setItem('data', data);
 var mafiabot = new Discord.Client();
 
 // utilities
