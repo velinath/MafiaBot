@@ -7,15 +7,12 @@ var Discord = require('discord.js');
 
 // init stuff
 store.initSync();
-var defaults = {
+var data = _.merge({
     channelsActivated: [],
     pmChannels: [],
     games: [],
-};
-_.each(defaults, (val, key) => {
-    var objWithDefaults = _.merge({}, {[key]: val}, {[key]: store.getItem(key)});
-    store.setItem(key, objWithDefaults[key]);
-});
+}, store.getItem('data'));
+store.setItem('data');
 var mafiabot = new Discord.Client();
 
 // utilities
@@ -30,7 +27,7 @@ var adminCheck = message => {
     return false;
 };
 var activatedCheck = message => {
-    return store.getItem('channelsActivated').indexOf(message.channel.id) >= 0;
+    return data.channelsActivated.indexOf(message.channel.id) >= 0;
 }
 var listUsers = listOfUserIds => {
     var output = '';
@@ -43,8 +40,7 @@ var majorityOf = listOfPlayers => {
     return Math.ceil(_.filter(listOfPlayers, 'alive').length / 2 + 0.1);
 }
 var printCurrentPlayers = channelId => {
-    var currentGames = store.getItem('games');
-    var gameInChannel = _.find(currentGames, {channelId: channelId});
+    var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(gameInChannel.players, 'id'))}`;
         mafiabot.sendMessage(channelId, output);
@@ -53,8 +49,7 @@ var printCurrentPlayers = channelId => {
     return false;
 }
 var printUnconfirmedPlayers = channelId => {
-    var currentGames = store.getItem('games');
-    var gameInChannel = _.find(currentGames, {channelId: channelId});
+    var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
         var output = unconfirmedPlayers.length 
@@ -67,8 +62,7 @@ var printUnconfirmedPlayers = channelId => {
     return false;
 }
 var printAlivePlayers = channelId => {
-    var currentGames = store.getItem('games');
-    var gameInChannel = _.find(currentGames, {channelId: channelId});
+    var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var output = `Currently ${s(_.filter(gameInChannel.players, 'alive').length, 'player')} alive in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(_.filter(gameInChannel.players, 'alive'), 'id'))}`;
         mafiabot.sendMessage(channelId, output);
@@ -77,8 +71,7 @@ var printAlivePlayers = channelId => {
     return false;
 }
 var printDayState = channelId => {
-    var currentGames = store.getItem('games');
-    var gameInChannel = _.find(currentGames, {channelId: channelId});
+    var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel && gameInChannel.day > 0) {
         mafiabot.sendMessage(channelId, 
 `It is currently **${gameInChannel.state == STATE.DAY ? 'DAY' : 'NIGHT'} ${gameInChannel.day}** in game hosted by <@${gameInChannel.hostId}>!
@@ -90,8 +83,7 @@ Use ##vote, ##NL, and ##unvote commands to vote.`
     return false;
 };
 var printCurrentVotes = channelId => {
-    var currentGames = store.getItem('games');
-    var gameInChannel = _.find(currentGames, {channelId: channelId});
+    var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel && gameInChannel.day > 0) {
         var votesByTarget = _.sortBy(_.toArray(_.groupBy(gameInChannel.votes, 'targetId'), function(group) { return -group.length; }));
         var voteOutput = '';
@@ -148,8 +140,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel) {
                 mafiabot.sendMessage(message.channel, `Host of current game in channel:\n<@${gameInChannel.hostId}>`);
             } else {
@@ -174,12 +165,10 @@ var baseCommands = [
         adminOnly: true,
         activatedOnly: false,
         onMessage: message => {
-            var currentChannels = store.getItem('channelsActivated');
-            if (currentChannels.indexOf(message.channel.id) >= 0) {
+            if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
                 mafiabot.reply(message, `MafiaBot is already activated on channel **#${message.channel.name}**! Use *##deactivatemafia* to deactivate MafiaBot on this channel.`);
             } else {
-                currentChannels.push(message.channel.id);
-                store.setItem('channelsActivated', currentChannels);
+                data.channelsActivated.push(message.channel.id);
                 mafiabot.reply(message, `MafiaBot has been activated on channel **#${message.channel.name}**! Use *##creategame* to start playing some mafia!`);
             }
         },
@@ -190,10 +179,8 @@ var baseCommands = [
         adminOnly: true,
         activatedOnly: false,
         onMessage: message => {
-            var currentChannels = store.getItem('channelsActivated');
-            if (currentChannels.indexOf(message.channel.id) >= 0) {
-                currentChannels.splice(currentChannels.indexOf(message.channel.id), 1);
-                store.setItem('channelsActivated', currentChannels);
+            if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
+                data.channelsActivated.splice(data.channelsActivated.indexOf(message.channel.id), 1);
                 mafiabot.reply(message, `MafiaBot has been deactivated on channel **#${message.channel.name}**!`);
             } else {
                 mafiabot.reply(message, `MafiaBot is not activate on channel **#${message.channel.name}**! Use *##activatemafia* to activate MafiaBot on this channel.`);
@@ -206,8 +193,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel) {
                 mafiabot.reply(message, `A game is already running in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>!`);
             } else {
@@ -221,8 +207,7 @@ var baseCommands = [
                     night: false,
                     votes: [],
                 };
-                currentGames.push(gameInChannel);
-                store.setItem('games', currentGames);
+                data.games.push(gameInChannel);
                 mafiabot.sendMessage(message.channel, `Starting a game of mafia in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>!`);
             }
         },
@@ -233,11 +218,9 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             var endGame = becauseOf => {
-                _.remove(currentGames, gameInChannel);
-                store.setItem('games', currentGames);
+                _.remove(data.games, gameInChannel);
                 mafiabot.sendMessage(message.channel, `${becauseOf} ended game of mafia in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>! 😥`);
             };
             if (gameInChannel) {
@@ -250,7 +233,6 @@ var baseCommands = [
                         mafiabot.reply(message, `We already know you want to end the current game hosted by <@${gameInChannel.hostId}>!`);
                     } else {
                         gameInChannel.votesToEndGame.push(message.author.id);
-                        store.setItem('games', currentGames);
                         mafiabot.reply(message, `You voted to end the current game hosted by <@${gameInChannel.hostId}>!`);
                         
                         var votesRemaining = majorityOf(gameInChannel.players) - gameInChannel.votesToEndGame.length;
@@ -274,8 +256,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel) {
                 if (gameInChannel.hostId == message.author.id) {
                     if (gameInChannel.state == STATE.INIT) {
@@ -292,8 +273,7 @@ var baseCommands = [
                         printCurrentPlayers(message.channel.id);
                         printDayState(message.channel.id);
                     }
-                    store.setItem('games', currentGames);
-                } else {
+                    } else {
                     mafiabot.reply(message, `Only hosts can start the game!`);
                 }
             } else {
@@ -307,12 +287,10 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel) {
                 if (gameInChannel.state == STATE.INIT) {
-                    var pmChannels = store.getItem('pmChannels');
-                    if (!_.find(pmChannels, {playerId: message.author.id})) {
+                    if (!_.find(data.pmChannels, {playerId: message.author.id})) {
                         mafiabot.reply(message, `You need to send me a private message to open up a direct channel of communication between us before you can join a game!`);                        
                     } else if (_.find(gameInChannel.players, {id: message.author.id})) {
                         mafiabot.reply(message, `You are already in the current game hosted by <@${gameInChannel.hostId}>!`);
@@ -324,7 +302,6 @@ var baseCommands = [
                             alive: true,
                         };
                         gameInChannel.players.push(newPlayer);
-                        store.setItem('games', currentGames);
                         mafiabot.sendMessage(message.channel, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
                     }
                     printCurrentPlayers(message.channel.id);
@@ -342,13 +319,11 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel) {
                 if (gameInChannel.state == STATE.INIT) {
                     if (_.find(gameInChannel.players, {id: message.author.id})) {
                         _.pullAllBy(gameInChannel.players, [{id: message.author.id}], 'id');
-                        store.setItem('games', currentGames);
                         mafiabot.sendMessage(message.channel, `<@${message.author.id}> left the current game hosted by <@${gameInChannel.hostId}>!`);
                     } else {
                         mafiabot.reply(message, `You are not currently in the current game hosted by <@${gameInChannel.hostId}>!`);
@@ -369,8 +344,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: (message, args) => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel && gameInChannel.state == STATE.CONFIRMING) {
                 var player = _.find(gameInChannel.players, {id: message.author.id});
                 if (player) {
@@ -383,8 +357,7 @@ var baseCommands = [
                         gameInChannel.state = STATE.READY;
                     }
 
-                    store.setItem('games', currentGames);
-                }
+                    }
             }
         },
     },
@@ -395,8 +368,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: (message, args) => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel && gameInChannel.state == STATE.DAY) {
                 var player = _.find(gameInChannel.players, {id: message.author.id});
                 if (player && player.alive) {
@@ -422,7 +394,6 @@ var baseCommands = [
                                     _.find(gameInChannel.players, {id: targetId}).alive = false;
                                     gameInChannel.day++;
                                     gameInChannel.votes.length = 0;
-                                    store.setItem('games', currentGames);
                                     printAlivePlayers(message.channel.id);
                                     printDayState(message.channel.id);
                                     break;
@@ -433,8 +404,7 @@ var baseCommands = [
                         mafiabot.reply(message, `'${args[1]}' is not a valid vote target!`);
                     }
                     printCurrentVotes(message.channel.id);
-                    store.setItem('games', currentGames);
-                }
+                    }
             }
         },
     },
@@ -444,8 +414,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: (message, args) => {
-            var currentGames = store.getItem('games');
-            var gameInChannel = _.find(currentGames, {channelId: message.channel.id});
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel && gameInChannel.state == STATE.DAY) {
                 var player = _.find(gameInChannel.players, {id: message.author.id});
                 if (player && player.alive) {
@@ -454,8 +423,7 @@ var baseCommands = [
                     var targetString = vote ? ` <@${vote.targetId}>` : '... nothing';
                     mafiabot.sendMessage(message.channel, `<@${message.author.id}> unvoted${targetString}!`);
                     printCurrentVotes(message.channel.id);
-                    store.setItem('games', currentGames);
-                }
+                    }
             }
         },
     },
@@ -529,13 +497,14 @@ mafiabot.on("message", message => {
 
     // receiving a PM
     if (message.channel.recipient) {
-        var pmChannels = store.getItem('pmChannels');
-        if (!_.find(pmChannels, {playerId: message.channel.recipient.id})) {
-            pmChannels.push({playerId: message.channel.recipient.id, channelId: message.channel.id});
-            store.setItem('pmChannels', pmChannels);
+        if (!_.find(data.pmChannels, {playerId: message.channel.recipient.id})) {
+            data.pmChannels.push({playerId: message.channel.recipient.id, channelId: message.channel.id});
             mafiabot.reply(message, 'Thanks for the one-time private message to open a direct channel of communication between us! You can join and play mafia games on this server.');
         }
     }
+
+    // save data after every message
+    store.setItem('data', data);
 });
 
 // login and export after everything is set up
