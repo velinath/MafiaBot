@@ -40,7 +40,7 @@ var listUsers = listOfUserIds => {
     return output;
 }
 var majorityOf = listOfPlayers => {
-    return Math.ceil(_.filter(gameInChannel.players, 'alive').length / 2 + 0.1);
+    return Math.ceil(_.filter(listOfPlayers, 'alive').length / 2 + 0.1);
 }
 var printCurrentPlayers = channelId => {
     var currentGames = store.getItem('games');
