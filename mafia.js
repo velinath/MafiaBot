@@ -2,6 +2,8 @@
 
 var config = require('./config.js');
 var _ = require('lodash');
+var levenshtein = (function() { var fl = require('fast-levenshtein'); return function(a, b) { return 1 - fl.get(a, b)/Math.max(a.length, b.length); }; })(); // wrap levenshtein function to get 0.0 - 1.0 similarity range
+var jarowinkler = require('jaro-winkler');
 var store = require('node-persist');
 var Discord = require('discord.js');
 
@@ -39,6 +41,44 @@ var listUsers = listOfUserIds => {
 var majorityOf = listOfPlayers => {
     return Math.ceil(_.filter(listOfPlayers, 'alive').length / 2 + 0.1);
 }
+var getPlayerFromString = (str, channelId) => {
+    var gameInChannel = _.find(data.games, {channelId: channelId});
+    if (gameInChannel) {
+        str = (str || '').toLowerCase();
+        if (str.indexOf('@') >= 0) {
+            // direct mention, easy to find player
+            return _.find(gameInChannel.players, {id: str.replace(/[\<\@\>]/g, '')});
+        } else {
+            // indirect mention, need to use string distance algorithm to find player
+            const levLimit = 0.5;
+            const jwLimit = 0.7;
+            var playerNameComparisons = _.sortBy(_.map(gameInChannel.players, function(player) {
+                return {
+                    id: player.id,
+                    name: player.name,
+                    lev: levenshtein(str, player.name.toLowerCase()),
+                    jw: jarowinkler(str, player.name.toLowerCase()),
+                }
+            }), function(item) {
+                var score = 0;
+                if (item.lev >= levLimit) score += 1000;
+                if (item.jw >= jwLimit) score += 1000;
+                score += item.lev;
+                score += item.jw;
+                return -score;
+            });
+            var closestMatch = playerNameComparisons[0];
+            if (closestMatch.lev >= levLimit || closestMatch.jw >= jwLimit) {
+                return _.find(gameInChannel.players, {id: closestMatch.id});
+            } else {
+                return null; // closest match is not good enough
+            }
+        }
+    }
+    return null;
+}
+
+// printing
 var printCurrentPlayers = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
@@ -371,7 +411,7 @@ var baseCommands = [
             if (gameInChannel && gameInChannel.state == STATE.DAY) {
                 var player = _.find(gameInChannel.players, {id: message.author.id});
                 if (player && player.alive) {
-                    var target = _.find(gameInChannel.players, {id: (args[1] || '').replace(/[\<\@\>]/g, '')});
+                    var target = getPlayerFromString(args[1], message.channel.id);
                     if (target) {
                         if (!target.alive) {
                             mafiabot.reply(message, `You can't vote for the dead player ${args[1]}'!`);
@@ -424,33 +464,6 @@ var baseCommands = [
                     printCurrentVotes(message.channel.id);
                     }
             }
-        },
-    },
-    {
-        commands: ['catgirls'],
-        description: ':3',
-        adminOnly: true,
-        activatedOnly: true,
-        onMessage: message => {
-            mafiabot.reply(message, "nyaaaa~");
-        },
-    },
-    {
-        commands: ['fool', 'foolmo', 'foolmoron'],
-        description: 'No lynch test',
-        adminOnly: false,
-        activatedOnly: true,
-        onMessage: message => {
-            mafiabot.reply(message, "yes I agree <@88020438474567680> is the best user");
-        },
-    },
-    {
-        commands: ['arg', 'argtest'],
-        description: 'Arguments test',
-        adminOnly: false,
-        activatedOnly: true,
-        onMessage: (message, args) => {
-            mafiabot.reply(message, `Given args: ${args.join(' - ')}`);
         },
     },
 ];
