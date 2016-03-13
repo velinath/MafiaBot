@@ -471,6 +471,7 @@ var baseCommands = [
 // set up discord events
 mafiabot.on("message", message => {
     var contentLower = message.content.toLowerCase();
+    var args = message.content.split(/[ :]/);
     // go through all the base commands and see if any of them have been called
     if (contentLower.indexOf(commandPrefix) == 0) {
         var anyCommandMatched = false;
@@ -478,13 +479,17 @@ mafiabot.on("message", message => {
             var comm = baseCommands[i];
             var commandMatched = false;
             for (var c = 0; c < comm.commands.length; c++) {
-                commandMatched = commandMatched || (contentLower.indexOf(comm.commands[c].toLowerCase()) == commandPrefix.length);
+                commandMatched = 
+                    args[0].indexOf(comm.commands[c].toLowerCase()) == commandPrefix.length && 
+                    args[0].length == (comm.commands[c].length + commandPrefix.length);
+                if (commandMatched) {
+                    break;
+                }
             }
             anyCommandMatched = anyCommandMatched || commandMatched;
             if (commandMatched) {
                 if (!comm.adminOnly || adminCheck(message)) {
                     if (!comm.activatedOnly || activatedCheck(message)) {
-                        var args = message.content.split(/[ :]/);
                         comm.onMessage(message, args);
                     }
                 }
