@@ -77,6 +77,31 @@ var getPlayerFromString = (str, channelId) => {
     }
     return null;
 }
+var checkForLynch = channelId => {
+    var gameInChannel = _.find(data.games, {channelId: channelId});
+    if (gameInChannel) {
+        var votesRequired = majorityOf(gameInChannel.players);
+        var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
+        for (var targetId in votesByTarget) {
+            if (votesByTarget[targetId].length >= votesRequired) {
+                mafiabot.sendMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                mafiabot.sendMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                if (targetId == 'NO LYNCH') {
+                    mafiabot.sendMessage(channelId, `No one was lynched.`);
+                } else {
+                    mafiabot.sendMessage(channelId, `<@${targetId}> was lynched.`);
+                    _.find(gameInChannel.players, {id: targetId}).alive = false;
+                }
+                mafiabot.sendMessage(channelId, `**It is now night.**`);
+                gameInChannel.day++;
+                gameInChannel.votes.length = 0;
+                printAlivePlayers(channelId);
+                printDayState(channelId);
+                break;
+            }
+        }
+    }
+}
 
 // printing
 var printCurrentPlayers = channelId => {
@@ -395,8 +420,7 @@ var baseCommands = [
                     if (!unconfirmedPlayers.length) {
                         gameInChannel.state = STATE.READY;
                     }
-
-                    }
+                }
             }
         },
     },
@@ -422,28 +446,32 @@ var baseCommands = [
                             gameInChannel.votes.push({playerId: message.author.id, targetId: target.id, time: new Date()});
                             mafiabot.sendMessage(message.channel, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
 
-                            // check for lynch
-                            var votesRequired = majorityOf(gameInChannel.players);
-                            var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
-                            for (var targetId in votesByTarget) {
-                                if (votesByTarget[targetId].length >= votesRequired) {
-                                    mafiabot.sendMessage(message.channel, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
-                                    mafiabot.sendMessage(message.channel, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
-                                    mafiabot.sendMessage(message.channel, `<@${targetId}> was lynched. It is now night.`);
-                                    _.find(gameInChannel.players, {id: targetId}).alive = false;
-                                    gameInChannel.day++;
-                                    gameInChannel.votes.length = 0;
-                                    printAlivePlayers(message.channel.id);
-                                    printDayState(message.channel.id);
-                                    break;
-                                }
-                            }
+                            checkForLynch(message.channel.id);
                         }
                     } else {
                         mafiabot.reply(message, `'${args[1]}' is not a valid vote target!`);
                     }
                     printCurrentVotes(message.channel.id);
-                    }
+                }
+            }
+        },
+    },
+    {
+        commands: ['nl', 'nolynch'],
+        description: 'Vote for no lynch today',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: (message, args) => {
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
+            if (gameInChannel && gameInChannel.state == STATE.DAY) {
+                var player = _.find(gameInChannel.players, {id: message.author.id});
+                if (player && player.alive) {
+                    _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
+                    gameInChannel.votes.push({playerId: message.author.id, targetId: 'NO LYNCH', time: new Date()});
+                    mafiabot.sendMessage(message.channel, `<@${message.author.id}> voted to No Lynch!`);
+
+                    checkForLynch(message.channel.id);
+                }
             }
         },
     },
@@ -462,7 +490,7 @@ var baseCommands = [
                     var targetString = vote ? ` <@${vote.targetId}>` : '... nothing';
                     mafiabot.sendMessage(message.channel, `<@${message.author.id}> unvoted${targetString}!`);
                     printCurrentVotes(message.channel.id);
-                    }
+                }
             }
         },
     },
