@@ -2,10 +2,13 @@
 
 var config = require('./config.js');
 var _ = require('lodash');
-var levenshtein = (function() { var fl = require('fast-levenshtein'); return function(a, b) { return 1 - fl.get(a, b)/Math.max(a.length, b.length); }; })(); // wrap levenshtein function to get 0.0 - 1.0 similarity range
-var jarowinkler = require('jaro-winkler');
 var store = require('node-persist');
 var Discord = require('discord.js');
+
+var roles = require('./roles');
+
+var s = require('./pluralize.js');
+var closestPlayer = require('./closestPlayer.js');
 
 // init stuff
 store.initSync();
@@ -18,8 +21,12 @@ store.setItem('data', data);
 var mafiabot = new Discord.Client();
 
 // utilities
-var s = (num, str, pluralString, singleString) => {
-    return num + ' ' + str + (num == 1 ? (singleString || '') : (pluralString || 's'));
+var getPlayerFromString = (str, channelId) => {
+    var gameInChannel = _.find(data.games, {channelId: channelId});
+    if (gameInChannel) {
+        return closestPlayer(str, gameInChannel.players);
+    }
+    return null;
 }
 var adminCheck = message => {
     if (config.admins.indexOf(message.author.id) >= 0) {
@@ -40,42 +47,6 @@ var listUsers = listOfUserIds => {
 }
 var majorityOf = listOfPlayers => {
     return Math.ceil(_.filter(listOfPlayers, 'alive').length / 2 + 0.1);
-}
-var getPlayerFromString = (str, channelId) => {
-    var gameInChannel = _.find(data.games, {channelId: channelId});
-    if (gameInChannel) {
-        str = (str || '').toLowerCase();
-        if (str.indexOf('@') >= 0) {
-            // direct mention, easy to find player
-            return _.find(gameInChannel.players, {id: str.replace(/[\<\@\>]/g, '')});
-        } else {
-            // indirect mention, need to use string distance algorithm to find player
-            const levLimit = 0.5;
-            const jwLimit = 0.7;
-            var playerNameComparisons = _.sortBy(_.map(gameInChannel.players, function(player) {
-                return {
-                    id: player.id,
-                    name: player.name,
-                    lev: levenshtein(str, player.name.toLowerCase()),
-                    jw: jarowinkler(str, player.name.toLowerCase()),
-                }
-            }), function(item) {
-                var score = 0;
-                if (item.lev >= levLimit) score += 1000;
-                if (item.jw >= jwLimit) score += 1000;
-                score += item.lev;
-                score += item.jw;
-                return -score;
-            });
-            var closestMatch = playerNameComparisons[0];
-            if (closestMatch.lev >= levLimit || closestMatch.jw >= jwLimit) {
-                return _.find(gameInChannel.players, {id: closestMatch.id});
-            } else {
-                return null; // closest match is not good enough
-            }
-        }
-    }
-    return null;
 }
 var checkForLynch = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
@@ -500,6 +471,7 @@ var baseCommands = [
 mafiabot.on("message", message => {
     var contentLower = message.content.toLowerCase();
     var args = message.content.split(/[ :]/);
+    args[0] = args[0].substring(commandPrefix.length);
     // go through all the base commands and see if any of them have been called
     if (contentLower.indexOf(commandPrefix) == 0) {
         var anyCommandMatched = false;
@@ -508,8 +480,8 @@ mafiabot.on("message", message => {
             var commandMatched = false;
             for (var c = 0; c < comm.commands.length; c++) {
                 commandMatched = 
-                    args[0].indexOf(comm.commands[c].toLowerCase()) == commandPrefix.length && 
-                    args[0].length == (comm.commands[c].length + commandPrefix.length);
+                    args[0].indexOf(comm.commands[c].toLowerCase()) == 0 && 
+                    args[0].length == comm.commands[c].length;
                 if (commandMatched) {
                     break;
                 }
@@ -530,8 +502,8 @@ mafiabot.on("message", message => {
             if (defaultComm) {
                 if (!defaultComm.adminOnly || adminCheck(message)) {
                     if (!defaultComm.activatedOnly || activatedCheck(message)) {
-                        // args needs to be slightly modified for default commands (so '##xxx' has args ['##', 'xxx'])
-                        var args = [commandPrefix].concat(message.content.split(/[ :]/));
+                        // args needs to be slightly modified for default commands (so '##xxx' has args ['', 'xxx'])
+                        var args = [''].concat(message.content.split(/[ :]/));
                         args[1] = args[1].substring(commandPrefix.length);
                         defaultComm.onMessage(message, args);
                     }
