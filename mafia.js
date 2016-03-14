@@ -209,7 +209,7 @@ var baseCommands = [
             if (gameInChannel) {
                 mafiabot.sendMessage(message.channel, `Host of current game in channel:\n<@${gameInChannel.hostId}>`);
             } else {
-                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);                
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);                
             }
         },
     },
@@ -220,7 +220,7 @@ var baseCommands = [
         activatedOnly: true,
         onMessage: message => {
             if (!printCurrentPlayers(message.channel.id)) {
-                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);         
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);         
             }
         },
     },
@@ -231,10 +231,10 @@ var baseCommands = [
         activatedOnly: false,
         onMessage: message => {
             if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
-                mafiabot.reply(message, `MafiaBot is already activated on channel **#${message.channel.name}**! Use *##deactivatemafia* to deactivate MafiaBot on this channel.`);
+                mafiabot.reply(message, `MafiaBot is already activated in *<#${message.channel.id}>*! Use *##deactivatemafia* to deactivate MafiaBot on this channel.`);
             } else {
                 data.channelsActivated.push(message.channel.id);
-                mafiabot.reply(message, `MafiaBot has been activated on channel **#${message.channel.name}**! Use *##creategame* to start playing some mafia!`);
+                mafiabot.reply(message, `MafiaBot has been activated in *<#${message.channel.id}>*! Use *##creategame* to start playing some mafia!`);
             }
         },
     },
@@ -246,9 +246,9 @@ var baseCommands = [
         onMessage: message => {
             if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
                 data.channelsActivated.splice(data.channelsActivated.indexOf(message.channel.id), 1);
-                mafiabot.reply(message, `MafiaBot has been deactivated on channel **#${message.channel.name}**!`);
+                mafiabot.reply(message, `MafiaBot has been deactivated in *<#${message.channel.id}>*!`);
             } else {
-                mafiabot.reply(message, `MafiaBot is not activate on channel **#${message.channel.name}**! Use *##activatemafia* to activate MafiaBot on this channel.`);
+                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *##activatemafia* to activate MafiaBot on this channel.`);
             }
         },
     },
@@ -260,7 +260,7 @@ var baseCommands = [
         onMessage: message => {
             var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel) {
-                mafiabot.reply(message, `A game is already running in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>!`);
+                mafiabot.reply(message, `A game is already running in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>!`);
             } else {
                 gameInChannel = {
                     channelId: message.channel.id,
@@ -273,7 +273,7 @@ var baseCommands = [
                     votes: [],
                 };
                 data.games.push(gameInChannel);
-                mafiabot.sendMessage(message.channel, `Starting a game of mafia in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>!`);
+                mafiabot.sendMessage(message.channel, `Starting a game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>!`);
             }
         },
     },
@@ -286,7 +286,7 @@ var baseCommands = [
             var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             var endGame = becauseOf => {
                 _.remove(data.games, gameInChannel);
-                mafiabot.sendMessage(message.channel, `${becauseOf} ended game of mafia in channel *#${message.channel.name}* hosted by <@${gameInChannel.hostId}>! 😥`);
+                mafiabot.sendMessage(message.channel, `${becauseOf} ended game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>! 😥`);
             };
             if (gameInChannel) {
                 if (gameInChannel.hostId == message.author.id) {
@@ -311,7 +311,7 @@ var baseCommands = [
                     mafiabot.reply(message, `Only admins, hosts, and joined players can end a game!`);
                 }
             } else {
-                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
             }
         },
     },
@@ -329,7 +329,7 @@ var baseCommands = [
                         mafiabot.sendMessage(message.channel, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **##confirm** in this channel to confirm your role.`);
                         printCurrentPlayers(message.channel.id);
                         for (var i = 0; i < gameInChannel.players.length; i++) {
-                            mafiabot.sendMessage(_.find(mafiabot.users, {id: gameInChannel.players[i].id}), `Your role is ______. Type **##confirm** in channel *#${message.channel.name}* to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                            mafiabot.sendMessage(_.find(mafiabot.users, {id: gameInChannel.players[i].id}), `Your role is ______. Type **##confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                         }
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
@@ -342,7 +342,7 @@ var baseCommands = [
                     mafiabot.reply(message, `Only hosts can start the game!`);
                 }
             } else {
-                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
             }
         },
     },
@@ -374,7 +374,7 @@ var baseCommands = [
                     mafiabot.reply(message, `The current game is already going, so the player list is locked!`);                    
                 }
             } else {
-                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
             }
         },
     },
@@ -398,7 +398,7 @@ var baseCommands = [
                     mafiabot.reply(message, `The current game is already starting, so the player list is locked!`);
                 }
             } else {
-                mafiabot.reply(message, `There's no game currently running in channel *#${message.channel.name}*!`);
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
             }
         },
     },
