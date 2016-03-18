@@ -13,12 +13,27 @@ var closestPlayer = require('./closestPlayer.js');
 // init stuff
 store.initSync();
 var data = _.merge({
+    syncMessages: [],
+
     channelsActivated: [],
     pmChannels: [],
     games: [],
 }, store.getItem('data'));
-store.setItem('data', data);
+store.setItemSync('data', data);
 var mafiabot = new Discord.Client();
+
+// synchronous messages
+var syncMessage = (channelId, content) => {
+    data.syncMessages.push({
+        channelId: channelId,
+        content: content,
+    });
+};
+var syncReply = (message, content) => {
+    syncMessage(message.channel.id, message.author + ', ' + content);
+};
+var readyToSendSyncMessage = true;
+var timeLastSentSyncMessage = new Date();
 
 // utilities
 var getPlayerFromString = (str, channelId) => {
@@ -55,15 +70,16 @@ var checkForLynch = channelId => {
         var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
         for (var targetId in votesByTarget) {
             if (votesByTarget[targetId].length >= votesRequired) {
-                mafiabot.sendMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
-                mafiabot.sendMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                syncMessage(channelId, `**!! *NO TALKING AT NIGHT* !!**`);
                 if (targetId == 'NO LYNCH') {
-                    mafiabot.sendMessage(channelId, `No one was lynched.`);
+                    syncMessage(channelId, `No one was lynched.`);
                 } else {
-                    mafiabot.sendMessage(channelId, `<@${targetId}> was lynched.`);
+                    syncMessage(channelId, `<@${targetId}> was lynched.`);
                     _.find(gameInChannel.players, {id: targetId}).alive = false;
                 }
-                mafiabot.sendMessage(channelId, `**It is now night.**`);
+                syncMessage(channelId, `**It is now night.**`);
                 gameInChannel.day++;
                 gameInChannel.votes.length = 0;
                 printAlivePlayers(channelId);
@@ -79,7 +95,7 @@ var printCurrentPlayers = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(gameInChannel.players, 'id'))}`;
-        mafiabot.sendMessage(channelId, output);
+        syncMessage(channelId, output);
         return true;
     }
     return false;
@@ -92,7 +108,7 @@ var printUnconfirmedPlayers = channelId => {
             ? `${s(unconfirmedPlayers.length, 'player')} still must ##confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
-        mafiabot.sendMessage(channelId, output);
+        syncMessage(channelId, output);
         return true;
     }
     return false;
@@ -101,7 +117,7 @@ var printAlivePlayers = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var output = `Currently ${s(_.filter(gameInChannel.players, 'alive').length, 'player')} alive in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(_.filter(gameInChannel.players, 'alive'), 'id'))}`;
-        mafiabot.sendMessage(channelId, output);
+        syncMessage(channelId, output);
         return true;
     }
     return false;
@@ -109,7 +125,7 @@ var printAlivePlayers = channelId => {
 var printDayState = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel && gameInChannel.day > 0) {
-        mafiabot.sendMessage(channelId, 
+        syncMessage(channelId, 
 `It is currently **${gameInChannel.state == STATE.DAY ? 'DAY' : 'NIGHT'} ${gameInChannel.day}** in game hosted by <@${gameInChannel.hostId}>!
 **${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(gameInChannel.players)} to lynch!**
 Use ##vote, ##NL, and ##unvote commands to vote.`
@@ -126,7 +142,7 @@ var printCurrentVotes = channelId => {
         for (var i = 0; i < votesByTarget.length; i++) {
             voteOutput += `\n(${votesByTarget[i].length}) <@${votesByTarget[i][0].targetId}>: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '<@' + vote.playerId + '>'; }).join(', ')}`;
         }
-        mafiabot.sendMessage(channelId,
+        syncMessage(channelId,
 `**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(gameInChannel.players)} to lynch!**
 Use ##vote, ##NL, and ##unvote commands to vote.${voteOutput}`
             );
@@ -297,7 +313,7 @@ var baseCommands = [
                 if (gameInChannel.hostId == message.author.id) {
                     if (gameInChannel.state == STATE.INIT) {
                         gameInChannel.state = STATE.CONFIRMING;
-                        mafiabot.sendMessage(message.channel, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **##confirm** in this channel to confirm your role.`);
+                        syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **##confirm** in this channel to confirm your role.`);
                         printCurrentPlayers(message.channel.id);
                         for (var i = 0; i < gameInChannel.players.length; i++) {
                             mafiabot.sendMessage(_.find(mafiabot.users, {id: gameInChannel.players[i].id}), `Your role is ______. Type **##confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
@@ -305,7 +321,7 @@ var baseCommands = [
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
                         gameInChannel.day = 1;
-                        mafiabot.sendMessage(message.channel, `All players have confirmed and host <@${gameInChannel.hostId}> is now starting the game of mafia!`);
+                        syncMessage(message.channel.id, `All players have confirmed and host <@${gameInChannel.hostId}> is now starting the game of mafia!`);
                         printCurrentPlayers(message.channel.id);
                         printDayState(message.channel.id);
                     }
@@ -338,9 +354,9 @@ var baseCommands = [
                             alive: true,
                         };
                         gameInChannel.players.push(newPlayer);
-                        mafiabot.sendMessage(message.channel, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
+                        syncMessage(message.channel.id, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
+                        printCurrentPlayers(message.channel.id);
                     }
-                    printCurrentPlayers(message.channel.id);
                 } else {
                     mafiabot.reply(message, `The current game is already going, so the player list is locked!`);                    
                 }
@@ -360,11 +376,11 @@ var baseCommands = [
                 if (gameInChannel.state == STATE.INIT) {
                     if (_.find(gameInChannel.players, {id: message.author.id})) {
                         _.pullAllBy(gameInChannel.players, [{id: message.author.id}], 'id');
-                        mafiabot.sendMessage(message.channel, `<@${message.author.id}> left the current game hosted by <@${gameInChannel.hostId}>!`);
+                        syncMessage(message.channel.id, `<@${message.author.id}> left the current game hosted by <@${gameInChannel.hostId}>!`);
+                        printCurrentPlayers(message.channel.id);
                     } else {
                         mafiabot.reply(message, `You are not currently in the current game hosted by <@${gameInChannel.hostId}>!`);
                     }
-                    printCurrentPlayers(message.channel.id);
                 } else {
                     mafiabot.reply(message, `The current game is already starting, so the player list is locked!`);
                 }
@@ -384,7 +400,7 @@ var baseCommands = [
                 var player = _.find(gameInChannel.players, {id: message.author.id});
                 if (player) {
                     player.confirmed = true;
-                    mafiabot.reply(message, `Thanks for confirming for the current game hosted by <@${gameInChannel.hostId}>!`);
+                    syncReply(message, `Thanks for confirming for the current game hosted by <@${gameInChannel.hostId}>!`);
                     printUnconfirmedPlayers(message.channel.id);
 
                     var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
@@ -415,7 +431,7 @@ var baseCommands = [
                         } else {
                             _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                             gameInChannel.votes.push({playerId: message.author.id, targetId: target.id, time: new Date()});
-                            mafiabot.sendMessage(message.channel, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
+                            syncMessage(message.channel.id, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
 
                             checkForLynch(message.channel.id);
                         }
@@ -439,7 +455,7 @@ var baseCommands = [
                 if (player && player.alive) {
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                     gameInChannel.votes.push({playerId: message.author.id, targetId: 'NO LYNCH', time: new Date()});
-                    mafiabot.sendMessage(message.channel, `<@${message.author.id}> voted to No Lynch!`);
+                    syncMessage(message.channel.id, `<@${message.author.id}> voted to No Lynch!`);
 
                     checkForLynch(message.channel.id);
                 }
@@ -459,7 +475,7 @@ var baseCommands = [
                     var vote = _.find(gameInChannel.votes, {playerId: message.author.id});
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                     var targetString = vote ? ` <@${vote.targetId}>` : '... nothing';
-                    mafiabot.sendMessage(message.channel, `<@${message.author.id}> unvoted${targetString}!`);
+                    syncMessage(message.channel.id, `<@${message.author.id}> unvoted${targetString}!`);
                     printCurrentVotes(message.channel.id);
                 }
             }
@@ -480,7 +496,7 @@ mafiabot.on("message", message => {
             var commandMatched = false;
             for (var c = 0; c < comm.commands.length; c++) {
                 commandMatched = 
-                    args[0].indexOf(comm.commands[c].toLowerCase()) == 0 && 
+                    args[0].toLowerCase().indexOf(comm.commands[c].toLowerCase()) == 0 && 
                     args[0].length == comm.commands[c].length;
                 if (commandMatched) {
                     break;
@@ -521,9 +537,46 @@ mafiabot.on("message", message => {
     }
 
     // save data after every message
-    store.setItem('data', data);
+    store.setItemSync('data', data);
 });
 
-// login and export after everything is set up
-mafiabot.login(config.email, config.password);
+// main loop
+var t = new Date();
+var mainLoop = function() {
+    // timing stuff
+    var now = new Date();
+    var dt = now - t;
+    t = now;
+
+    // handle sync message taking too long to call back
+    if (now - timeLastSentSyncMessage >= config.syncMessageTimeout) {
+        readyToSendSyncMessage = true;
+    }
+
+    // send next sync message if possible
+    if (readyToSendSyncMessage && data.syncMessages.length) {
+        var message = data.syncMessages.shift();
+        mafiabot.sendMessage(message.channelId, message.content, {tts: false}, () => { readyToSendSyncMessage = true; });
+
+        readyToSendSyncMessage = false;
+        timeLastSentSyncMessage = new Date();
+    }
+
+    // save and wait for next loop
+    store.setItemSync('data', data);
+    setTimeout(mainLoop, Math.max(config.mainLoopInterval - (new Date() - now), 0));
+};
+
+// login and kick off main loop after everything is set up
+mafiabot.login(config.email, config.password).then(() => { 
+    // but wait for channels to be cached first or else there will be weird bugs
+    var checkForChannelsThenKickoff = () => {
+        if (mafiabot.channels.length) {
+            mainLoop(0);
+        } else {
+            setTimeout(checkForChannelsThenKickoff, 100);
+        }
+    }
+    checkForChannelsThenKickoff();
+});
 module.exports = mafiabot;
