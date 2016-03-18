@@ -24,14 +24,15 @@ store.setItemSync('data', data);
 var mafiabot = new Discord.Client();
 
 // synchronous messages
-var syncMessage = (channelId, content) => {
+var syncMessage = (channelId, content, delay) => {
     data.syncMessages.push({
         channelId: channelId,
         content: content,
+        delay: parseInt(delay) || 0,
     });
 };
-var syncReply = (message, content) => {
-    syncMessage(message.channel.id, message.author + ', ' + content);
+var syncReply = (message, content, delay) => {
+    syncMessage(message.channel.id, message.author + ', ' + content, delay);
 };
 var readyToSendSyncMessage = true;
 var timeLastSentSyncMessage = new Date();
@@ -85,9 +86,9 @@ var checkForLynch = channelId => {
                 syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
                 syncMessage(channelId, `**!! *NO TALKING AT NIGHT* !!**`);
                 if (targetId == 'NO LYNCH') {
-                    syncMessage(channelId, `No one was lynched.`);
+                    syncMessage(channelId, `No one was lynched.`, 1000);
                 } else {
-                    syncMessage(channelId, `<@${targetId}> was lynched.`);
+                    syncMessage(channelId, `<@${targetId}> was lynched.`, 1000);
                     _.find(gameInChannel.players, {id: targetId}).alive = false;
                 }
                 gameInChannel.state = STATE.NIGHT;
@@ -96,7 +97,7 @@ var checkForLynch = channelId => {
                     var role = getRole(player.role);
                     fireRoleEvent(role, 'onNight', {game: gameInChannel, player: player});
                 }
-                syncMessage(channelId, `**It is now night. Send in your night actions via PM.**`);
+                syncMessage(channelId, `**It is now night. Send in your night actions via PM.**`, 3000);
                 break;
             }
         }
@@ -572,12 +573,15 @@ var mainLoop = function() {
     }
 
     // send next sync message if possible
-    if (readyToSendSyncMessage && data.syncMessages.length) {
-        var message = data.syncMessages.shift();
-        mafiabot.sendMessage(message.channelId, message.content, {tts: false}, () => { readyToSendSyncMessage = true; });
+    if (data.syncMessages.length) {
+        data.syncMessages[0].delay -= dt;
+        if (readyToSendSyncMessage && data.syncMessages[0].delay <= 0) {
+            var message = data.syncMessages.shift();
+            mafiabot.sendMessage(message.channelId, message.content, {tts: false}, () => { readyToSendSyncMessage = true; });
 
-        readyToSendSyncMessage = false;
-        timeLastSentSyncMessage = new Date();
+            readyToSendSyncMessage = false;
+            timeLastSentSyncMessage = new Date();
+        }
     }
 
     // game-specific loops
