@@ -4,4 +4,6 @@ module.exports = {
     admins: [
         '88020438474567680', // fool
     ],
+    mainLoopInterval: 250,
+    syncMessageTimeout: 2000,
 };

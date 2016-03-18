@@ -6,6 +6,7 @@ var store = require('node-persist');
 var Discord = require('discord.js');
 
 var roles = require('./roles');
+var STATE = require('./gameStates.js')
 
 var s = require('./pluralize.js');
 var closestPlayer = require('./closestPlayer.js');
@@ -36,12 +37,22 @@ var readyToSendSyncMessage = true;
 var timeLastSentSyncMessage = new Date();
 
 // utilities
+var getRole = (roleId) => {
+    return _.find(roles, {id: roleId});
+}
+var fireRoleEvent = (role, event, params) => {
+    var func = role[event];
+    return func == null ? null : func(_.assignIn({mafiabot: mafiabot, data: data}, params));
+}
 var getPlayerFromString = (str, channelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         return closestPlayer(str, gameInChannel.players);
     }
     return null;
+}
+var getGameFromPlayer = (playerId) => {
+    return _.find(data.games, function(game) { return _.find(game.players, {id: playerId}); });
 }
 var adminCheck = message => {
     if (config.admins.indexOf(message.author.id) >= 0) {
@@ -79,11 +90,13 @@ var checkForLynch = channelId => {
                     syncMessage(channelId, `<@${targetId}> was lynched.`);
                     _.find(gameInChannel.players, {id: targetId}).alive = false;
                 }
-                syncMessage(channelId, `**It is now night.**`);
-                gameInChannel.day++;
-                gameInChannel.votes.length = 0;
-                printAlivePlayers(channelId);
-                printDayState(channelId);
+                gameInChannel.state = STATE.NIGHT;
+                for (var i = 0; i < gameInChannel.players.length; i++) {
+                    var player = gameInChannel.players[i];
+                    var role = getRole(player.role);
+                    fireRoleEvent(role, 'onNight', {game: gameInChannel, player: player});
+                }
+                syncMessage(channelId, `**It is now night. Send in your night actions via PM.**`);
                 break;
             }
         }
@@ -150,15 +163,6 @@ Use ##vote, ##NL, and ##unvote commands to vote.${voteOutput}`
     }
     return false;
 }
-
-// states
-var STATE = {
-    INIT: 'Waiting for players',
-    CONFIRMING: 'Waiting for confirmation from players',
-    READY: 'Waiting for host to start game',
-    DAY: 'Daytime, waiting for votes',
-    NIGHT: 'Nighttime, waiting for actions',
-};
 
 // commands
 var commandPrefix = '##';
@@ -316,7 +320,10 @@ var baseCommands = [
                         syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **##confirm** in this channel to confirm your role.`);
                         printCurrentPlayers(message.channel.id);
                         for (var i = 0; i < gameInChannel.players.length; i++) {
-                            mafiabot.sendMessage(_.find(mafiabot.users, {id: gameInChannel.players[i].id}), `Your role is ______. Type **##confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                            var player = gameInChannel.players[i];
+                            player.faction = ['Town', 'Mafia'][Math.floor(Math.random() * 2)];
+                            player.role = roles[Math.floor(Math.random() * roles.length)].id;
+                            mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ${player.faction} ${getRole(player.role).name}. Type **##confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                         }
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
@@ -352,6 +359,9 @@ var baseCommands = [
                             name: message.author.name,
                             confirmed: false,
                             alive: true,
+                            faction: null,
+                            role: null,
+                            roleData: {},
                         };
                         gameInChannel.players.push(newPlayer);
                         syncMessage(message.channel.id, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
@@ -530,9 +540,17 @@ mafiabot.on("message", message => {
 
     // receiving a PM
     if (message.channel.recipient) {
+        // pm channel setup
         if (!_.find(data.pmChannels, {playerId: message.channel.recipient.id})) {
             data.pmChannels.push({playerId: message.channel.recipient.id, channelId: message.channel.id});
             mafiabot.reply(message, 'Thanks for the one-time private message to open a direct channel of communication between us! You can join and play mafia games on this server.');
+        }
+        
+        var gameWithPlayer = getGameFromPlayer(message.author.id);
+        if (gameWithPlayer) {
+            var player = _.find(gameWithPlayer.players, {id: message.author.id});
+            var role = getRole(player.role);
+            fireRoleEvent(role, 'onPMCommand', {message: message, args: args, game: gameWithPlayer, player: player});
         }
     }
 
@@ -560,6 +578,27 @@ var mainLoop = function() {
 
         readyToSendSyncMessage = false;
         timeLastSentSyncMessage = new Date();
+    }
+
+    // game-specific loops
+    for (var i = 0; i < data.games.length; i++) {
+        var game = data.games[i];
+
+        if (game.state == STATE.NIGHT) {
+            // check if all players have finished night actions
+            var allPlayerNightActionsFinished = _.every(game.players, (player) => {
+                var result = fireRoleEvent(getRole(player.role), 'isFinished', {game: game, player: player});
+                return result === null || result === true;
+            });
+            if (allPlayerNightActionsFinished) {
+                game.state = STATE.DAY;
+                game.day++;
+                game.votes.length = 0;
+                syncMessage(game.channelId, '**All players have finished night actions!**');
+                printAlivePlayers(game.channelId);
+                printDayState(game.channelId);                
+            }
+        }
     }
 
     // save and wait for next loop
