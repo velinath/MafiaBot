@@ -6,7 +6,7 @@ var store = require('node-persist');
 var Discord = require('discord.js');
 
 var roles = require('./roles');
-var STATE = require('./gameStates.js')
+var STATE = require('./gameStates.js');
 
 var s = require('./pluralize.js');
 var closestPlayer = require('./closestPlayer.js');
@@ -41,9 +41,8 @@ var timeLastSentSyncMessage = new Date();
 var getRole = (roleId) => {
     return _.find(roles, {id: roleId});
 }
-var fireRoleEvent = (role, event, params) => {
-    var func = role[event];
-    return func == null ? null : func(_.assignIn({mafiabot: mafiabot, data: data}, params));
+var fireEvent = (event, params) => {
+    return event == null ? null : event(_.assignIn({mafiabot: mafiabot, data: data}, params));
 }
 var getPlayerFromString = (str, channelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
@@ -88,14 +87,14 @@ var checkForLynch = channelId => {
                 if (targetId == 'NO LYNCH') {
                     syncMessage(channelId, `No one was lynched.`, 1000);
                 } else {
-                    syncMessage(channelId, `<@${targetId}> was lynched.`, 1000);
-                    _.find(gameInChannel.players, {id: targetId}).alive = false;
+                    var lynchedPlayer = _.find(gameInChannel.players, {id: targetId});
+                    syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${lynchedPlayer.faction} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
+                    lynchedPlayer.alive = false;
                 }
                 gameInChannel.state = STATE.NIGHT;
                 for (var i = 0; i < gameInChannel.players.length; i++) {
                     var player = gameInChannel.players[i];
-                    var role = getRole(player.role);
-                    fireRoleEvent(role, 'onNight', {game: gameInChannel, player: player});
+                    fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
                 }
                 syncMessage(channelId, `**It is now night. Send in your night actions via PM.**`, 3000);
                 break;
@@ -201,7 +200,7 @@ var baseCommands = [
             if (gameInChannel) {
                 mafiabot.sendMessage(message.channel, `Host of current game in channel:\n<@${gameInChannel.hostId}>`);
             } else {
-                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);                
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
             }
         },
     },
@@ -212,7 +211,7 @@ var baseCommands = [
         activatedOnly: true,
         onMessage: message => {
             if (!printCurrentPlayers(message.channel.id)) {
-                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);         
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
             }
         },
     },
@@ -263,6 +262,8 @@ var baseCommands = [
                     day: 0,
                     night: false,
                     votes: [],
+                    nightActions: [],
+                    nightKills: {},
                 };
                 data.games.push(gameInChannel);
                 mafiabot.sendMessage(message.channel, `Starting a game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>!`);
@@ -324,16 +325,20 @@ var baseCommands = [
                             var player = gameInChannel.players[i];
                             player.faction = ['Town', 'Mafia'][Math.floor(Math.random() * 2)];
                             player.role = roles[Math.floor(Math.random() * roles.length)].id;
-                            mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ${player.faction} ${getRole(player.role).name}. Type **##confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                            mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **##confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                         }
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
                         gameInChannel.day = 1;
+                        for (var i = 0; i < gameInChannel.players.length; i++) {
+                            var player = gameInChannel.players[i];
+                            fireEvent(getRole(player.role).onGameStart, {game: gameInChannel, player: player});
+                        }
                         syncMessage(message.channel.id, `All players have confirmed and host <@${gameInChannel.hostId}> is now starting the game of mafia!`);
                         printCurrentPlayers(message.channel.id);
                         printDayState(message.channel.id);
                     }
-                    } else {
+                } else {
                     mafiabot.reply(message, `Only hosts can start the game!`);
                 }
             } else {
@@ -351,7 +356,7 @@ var baseCommands = [
             if (gameInChannel) {
                 if (gameInChannel.state == STATE.INIT) {
                     if (!_.find(data.pmChannels, {playerId: message.author.id})) {
-                        mafiabot.reply(message, `You need to send me a private message to open up a direct channel of communication between us before you can join a game!`);                        
+                        mafiabot.reply(message, `You need to send me a private message to open up a direct channel of communication between us before you can join a game!`);
                     } else if (_.find(gameInChannel.players, {id: message.author.id})) {
                         mafiabot.reply(message, `You are already in the current game hosted by <@${gameInChannel.hostId}>!`);
                     } else {
@@ -362,14 +367,16 @@ var baseCommands = [
                             alive: true,
                             faction: null,
                             role: null,
-                            roleData: {},
+                            roleData: {
+                                actions: [],
+                            },
                         };
                         gameInChannel.players.push(newPlayer);
                         syncMessage(message.channel.id, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
                         printCurrentPlayers(message.channel.id);
                     }
                 } else {
-                    mafiabot.reply(message, `The current game is already going, so the player list is locked!`);                    
+                    mafiabot.reply(message, `The current game is already going, so the player list is locked!`);
                 }
             } else {
                 mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
@@ -551,7 +558,7 @@ mafiabot.on("message", message => {
         if (gameWithPlayer) {
             var player = _.find(gameWithPlayer.players, {id: message.author.id});
             var role = getRole(player.role);
-            fireRoleEvent(role, 'onPMCommand', {message: message, args: args, game: gameWithPlayer, player: player});
+            fireEvent(role.onPMCommand, {message: message, args: args, game: gameWithPlayer, player: player});
         }
     }
 
@@ -591,16 +598,56 @@ var mainLoop = function() {
         if (game.state == STATE.NIGHT) {
             // check if all players have finished night actions
             var allPlayerNightActionsFinished = _.every(game.players, (player) => {
-                var result = fireRoleEvent(getRole(player.role), 'isFinished', {game: game, player: player});
+                var result = fireEvent(getRole(player.role).isFinished, {game: game, player: player});
                 return result === null || result === true;
             });
             if (allPlayerNightActionsFinished) {
+                game.timeToNightActionResolution -= dt;
+                console.log(game.timeToNightActionResolution);
+            } else {
+                game.timeToNightActionResolution = config.nightActionBufferTime * (1 + Math.random()/2);
+            }
+
+            if (game.timeToNightActionResolution <= 0) {
+                for (var i = 0; i < game.players.length; i++) {
+                    var player = game.players[i];
+                    fireEvent(getRole(player.role).onBlockingPhase, {game: game, player: player});
+                }
+                for (var i = 0; i < game.players.length; i++) {
+                    var player = game.players[i];
+                    fireEvent(getRole(player.role).onTargetingPhase, {game: game, player: player});
+                }
+                for (var i = 0; i < game.players.length; i++) {
+                    var player = game.players[i];
+                    fireEvent(getRole(player.role).onActionPhase, {game: game, player: player});
+                }
+                for (var i = 0; i < game.players.length; i++) {
+                    var player = game.players[i];
+                    fireEvent(getRole(player.role).onNightResolved, {game: game, player: player});
+                }
+                // figure out who died
+                var deadPlayers = [];
+                for (var playerId in game.nightKills) {
+                    if (game.nightKills[playerId] > 0) {
+                        _.find(game.players, {id: playerId}).alive = false;
+                        deadPlayers.push(playerId);
+                    }
+                }
+                // start day
                 game.state = STATE.DAY;
                 game.day++;
                 game.votes.length = 0;
-                syncMessage(game.channelId, '**All players have finished night actions!**');
+                game.nightActions.length = 0;
+                game.nightKills = {};
+                syncMessage(game.channelId, `**All players have finished night actions!**`);
+                syncMessage(game.channelId, `***${s(deadPlayers.length, 'player', 's have', ' has')} died.***`, 1000);
+                for (var i = 0; i < deadPlayers.length; i++) {
+                    var deadPlayer = _.find(game.players, {id: deadPlayers[i]});
+                    syncMessage(game.channelId, `<@${deadPlayer.id}>, the **${deadPlayer.faction} ${getRole(deadPlayer.role).name}**, has died!`, 1000);
+                }
+                syncMessage(game.channelId, `Day ${game.day} is now starting.`, 2000);
                 printAlivePlayers(game.channelId);
-                printDayState(game.channelId);                
+                printDayState(game.channelId);
             }
         }
     }

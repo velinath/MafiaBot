@@ -1,25 +1,21 @@
 var _ = require('lodash');
+var templates = require('./templates');
 var STATE = require('../gameStates.js');
 var closestPlayer = require('../closestPlayer.js');
 
-module.exports = {
+var self = templates.extend(templates.singleTarget, {
     id: 'doctor',
     name: 'Doctor',
-    description: `You can save someone each night with the *##save* command.`,
-    isFinished: (p) => {
-        return Boolean(p.player.roleData.finished);
-    },
-    onNight: (p) => {
-        p.player.roleData.finished = false;
-        p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: p.player.id}), `It is now night ${p.game.day}! Use the *##save* command to save someone.`);
-    },
-    onPMCommand: (p) => {
-        if (p.game.state != STATE.NIGHT) {
-            return;
-        }
-        if (p.args[0] == 'save') {
-            p.mafiabot.reply(p.message, `You doctor'd <@${(closestPlayer(p.args[1], p.game.players) || {}).id}>!`);
-            p.player.roleData.finished = true;
+    description: `You can save someone from dying each night with the ***##save*** command.`,
+    command: 'save',
+    commandGerund: 'saving',
+    commandText: 'protect a target from dying tonight',
+    actionText: 'doctor save',
+    onActionPhase: (p) => {
+        var action = _.find(p.game.nightActions, {playerId: p.player.id});
+        if (action) {
+            p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) - Infinity;
         }
     },
-};
+});
+module.exports = self;

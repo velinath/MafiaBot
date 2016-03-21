@@ -1,27 +1,30 @@
 var _ = require('lodash');
+var templates = require('./templates');
 var STATE = require('../gameStates.js');
 var s = require('../pluralize.js');
 var closestPlayer = require('../closestPlayer.js');
 
 var shotCount = 1;
-module.exports = {
+var self = templates.extend(templates.singleTarget, {
     id: 'vigilante',
     name: 'Vigilante',
-    description: `You can choose to shoot someone during night **${s(shotCount, 'time')} in the whole game** with the *##vig* command.`,
-    isFinished: (p) => {
-        return Boolean(p.player.roleData.finished);
+    description: `You can choose to shoot someone during night, *${s(shotCount, 'time')}* in the whole game, with the ***##kill*** command.`,
+    command: 'kill',
+    commandGerund: 'killing',
+    commandText: 'kill a target',
+    actionText: 'vig kill',
+    onGameStart: (p) => {
+        p.player.roleData.shotCount = shotCount;
     },
-    onNight: (p) => {
-        p.player.roleData.finished = false;
-        p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: p.player.id}), `It is now night ${p.game.day}! Use the *##vig* command to kill someone. You have ${s(shotCount, 'bullet')} left.`);
+    canDoAction: (p) => {
+        return p.player.roleData.shotCount > 0 ? true : 'You are out of bullets for the rest of the game.';
     },
-    onPMCommand: (p) => {
-        if (p.game.state != STATE.NIGHT) {
-            return;
+    onActionPhase: (p) => {
+        var action = _.find(p.game.nightActions, {playerId: p.player.id});
+        if (action) {
+            p.player.roleData.shotCount--;
+            p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) + 1;
         }
-        if (p.args[0] == 'vig') {
-            p.mafiabot.reply(p.message, `Yeah bro you totally killed <@${(closestPlayer(p.args[1], p.game.players) || {}).id}>!`);
-            p.player.roleData.finished = true;
-        }
     },
-};
+});
+module.exports = self;
