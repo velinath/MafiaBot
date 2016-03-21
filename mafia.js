@@ -72,12 +72,12 @@ var listUsers = listOfUserIds => {
     return output;
 }
 var majorityOf = listOfPlayers => {
-    return Math.ceil(_.filter(listOfPlayers, 'alive').length / 2 + 0.1);
+    return Math.ceil(listOfPlayers.length / 2 + 0.1);
 }
 var checkForLynch = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
-        var votesRequired = majorityOf(gameInChannel.players);
+        var votesRequired = majorityOf(_.filter(gameInChannel.players, 'alive'));
         var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
         for (var targetId in votesByTarget) {
             if (votesByTarget[targetId].length >= votesRequired) {
@@ -128,7 +128,7 @@ var printUnconfirmedPlayers = channelId => {
     if (gameInChannel) {
         var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
         var output = unconfirmedPlayers.length 
-            ? `${s(unconfirmedPlayers.length, 'player')} still must ##confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
+            ? `${s(unconfirmedPlayers.length, 'player')} still must --confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
         mafiabot.syncMessage(channelId, output);
@@ -141,8 +141,8 @@ var printDayState = channelId => {
     if (gameInChannel && gameInChannel.day > 0) {
         mafiabot.syncMessage(channelId, 
 `It is currently **${gameInChannel.state == STATE.DAY ? 'DAY' : 'NIGHT'} ${gameInChannel.day}** in game hosted by <@${gameInChannel.hostId}>!
-**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(gameInChannel.players)} to lynch!**
-Use ##vote, ##NL, and ##unvote commands to vote.`
+**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**
+Use --vote, --NL, and --unvote commands to vote.`
             );
         return true;
     }
@@ -154,11 +154,15 @@ var printCurrentVotes = channelId => {
         var votesByTarget = _.sortBy(_.toArray(_.groupBy(gameInChannel.votes, 'targetId'), function(group) { return -group.length; }));
         var voteOutput = '';
         for (var i = 0; i < votesByTarget.length; i++) {
-            voteOutput += `\n(${votesByTarget[i].length}) <@${votesByTarget[i][0].targetId}>: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '<@' + vote.playerId + '>'; }).join(', ')}`;
+            var voteId = votesByTarget[i][0].targetId;
+            if (voteId !== 'NO LYNCH') {
+                voteId = '<@' + voteId + '>';
+            }
+            voteOutput += `\n(${votesByTarget[i].length}) ${voteId}: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '`' + _.find(gameInChannel.players, {id: vote.playerId}).name + '`'; }).join(', ')}`;
         }
         mafiabot.syncMessage(channelId,
-`**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(gameInChannel.players)} to lynch!**
-Use ##vote, ##NL, and ##unvote commands to vote.${voteOutput}`
+`**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**
+Use --vote, --NL, and --unvote commands to vote.${voteOutput}`
             );
         return true;
     }
@@ -166,7 +170,7 @@ Use ##vote, ##NL, and ##unvote commands to vote.${voteOutput}`
 }
 
 // commands
-var commandPrefix = '##';
+var commandPrefix = '--';
 var baseCommands = [
     {
         commands: ['commands', 'help', 'wut'],
@@ -223,10 +227,10 @@ var baseCommands = [
         activatedOnly: false,
         onMessage: message => {
             if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
-                mafiabot.reply(message, `MafiaBot is already activated in *<#${message.channel.id}>*! Use *##deactivatemafia* to deactivate MafiaBot on this channel.`);
+                mafiabot.reply(message, `MafiaBot is already activated in *<#${message.channel.id}>*! Use *--deactivatemafia* to deactivate MafiaBot on this channel.`);
             } else {
                 data.channelsActivated.push(message.channel.id);
-                mafiabot.reply(message, `MafiaBot has been activated in *<#${message.channel.id}>*! Use *##creategame* to start playing some mafia!`);
+                mafiabot.reply(message, `MafiaBot has been activated in *<#${message.channel.id}>*! Use *--creategame* to start playing some mafia!`);
             }
         },
     },
@@ -240,7 +244,7 @@ var baseCommands = [
                 data.channelsActivated.splice(data.channelsActivated.indexOf(message.channel.id), 1);
                 mafiabot.reply(message, `MafiaBot has been deactivated in *<#${message.channel.id}>*!`);
             } else {
-                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *##activatemafia* to activate MafiaBot on this channel.`);
+                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *--activatemafia* to activate MafiaBot on this channel.`);
             }
         },
     },
@@ -320,13 +324,13 @@ var baseCommands = [
                 if (gameInChannel.hostId == message.author.id) {
                     if (gameInChannel.state == STATE.INIT) {
                         gameInChannel.state = STATE.CONFIRMING;
-                        mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **##confirm** in this channel to confirm your role.`);
+                        mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **--confirm** in this channel to confirm your role.`);
                         printCurrentPlayers(message.channel.id);
                         for (var i = 0; i < gameInChannel.players.length; i++) {
                             var player = gameInChannel.players[i];
                             player.faction = ['Town', 'Mafia'][Math.floor(Math.random() * 2)];
                             player.role = roles[Math.floor(Math.random() * roles.length)].id;
-                            mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **##confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                            mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **--confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                         }
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
@@ -479,6 +483,7 @@ var baseCommands = [
 
                     checkForLynch(message.channel.id);
                 }
+                printCurrentVotes(message.channel.id);
             }
         },
     },
@@ -494,7 +499,7 @@ var baseCommands = [
                 if (player && player.alive) {
                     var vote = _.find(gameInChannel.votes, {playerId: message.author.id});
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
-                    var targetString = vote ? ` <@${vote.targetId}>` : '... nothing';
+                    var targetString = vote ? vote.targetId === 'NO LYNCH' ? ' No Lynch' : ` <@${vote.targetId}>` : '... nothing';
                     mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> unvoted${targetString}!`);
                     printCurrentVotes(message.channel.id);
                 }
@@ -532,13 +537,13 @@ mafiabot.on("message", message => {
                 break;
             }
         }
-        // call default command if no command was matched, but there was still a command prefix (like '##xxx')
+        // call default command if no command was matched, but there was still a command prefix (like '--xxx')
         if (!anyCommandMatched) {
             var defaultComm = _.find(baseCommands, {default: true});
             if (defaultComm) {
                 if (!defaultComm.adminOnly || adminCheck(message)) {
                     if (!defaultComm.activatedOnly || activatedCheck(message)) {
-                        // args needs to be slightly modified for default commands (so '##xxx' has args ['', 'xxx'])
+                        // args needs to be slightly modified for default commands (so '--xxx' has args ['', 'xxx'])
                         var args = [''].concat(message.content.split(/[ :]/));
                         args[1] = args[1].substring(commandPrefix.length);
                         defaultComm.onMessage(message, args);
@@ -560,7 +565,9 @@ mafiabot.on("message", message => {
         if (gameWithPlayer) {
             var player = _.find(gameWithPlayer.players, {id: message.author.id});
             var role = getRole(player.role);
-            fireEvent(role.onPMCommand, {message: message, args: args, game: gameWithPlayer, player: player});
+            if (contentLower.indexOf(commandPrefix) == 0) {
+                fireEvent(role.onPMCommand, {message: message, args: args, game: gameWithPlayer, player: player});
+            }
         }
     }
 
@@ -599,7 +606,8 @@ var mainLoop = function() {
 
         if (game.state == STATE.NIGHT) {
             // check if all players have finished night actions
-            var allPlayerNightActionsFinished = _.every(game.players, (player) => {
+            var livePlayers = _.filter(game.players, 'alive');
+            var allPlayerNightActionsFinished = _.every(livePlayers, (player) => {
                 var result = fireEvent(getRole(player.role).isFinished, {game: game, player: player});
                 return result === null || result === true;
             });
