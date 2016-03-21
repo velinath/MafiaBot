@@ -90,6 +90,7 @@ var checkForLynch = channelId => {
                     var lynchedPlayer = _.find(gameInChannel.players, {id: targetId});
                     syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${lynchedPlayer.faction} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
                     lynchedPlayer.alive = false;
+                    lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
                 }
                 gameInChannel.state = STATE.NIGHT;
                 for (var i = 0; i < gameInChannel.players.length; i++) {
@@ -107,7 +108,16 @@ var checkForLynch = channelId => {
 var printCurrentPlayers = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
-        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(gameInChannel.players, 'id'))}`;
+        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by <@${gameInChannel.hostId}>:`;
+        for (var i = 0; i < gameInChannel.players.length; i++) {
+            var player = gameInChannel.players[i];
+            output += `\n${i + 1}) `;
+            if (player.alive) {
+                output += `\`${player.name}\``;
+            } else {
+                output += `~~\`${player.name}\`~~ - ${player.faction} ${getRole(player.role).name} - *${player.deathReason}*`;
+            }
+        }
         syncMessage(channelId, output);
         return true;
     }
@@ -121,15 +131,6 @@ var printUnconfirmedPlayers = channelId => {
             ? `${s(unconfirmedPlayers.length, 'player')} still must ##confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
-        syncMessage(channelId, output);
-        return true;
-    }
-    return false;
-}
-var printAlivePlayers = channelId => {
-    var gameInChannel = _.find(data.games, {channelId: channelId});
-    if (gameInChannel) {
-        var output = `Currently ${s(_.filter(gameInChannel.players, 'alive').length, 'player')} alive in game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(_.filter(gameInChannel.players, 'alive'), 'id'))}`;
         syncMessage(channelId, output);
         return true;
     }
@@ -365,6 +366,7 @@ var baseCommands = [
                             name: message.author.name,
                             confirmed: false,
                             alive: true,
+                            deathReason: '',
                             faction: null,
                             role: null,
                             roleData: {
@@ -629,8 +631,10 @@ var mainLoop = function() {
                 var deadPlayers = [];
                 for (var playerId in game.nightKills) {
                     if (game.nightKills[playerId] > 0) {
-                        _.find(game.players, {id: playerId}).alive = false;
-                        deadPlayers.push(playerId);
+                        var deadPlayer = _.find(game.players, {id: playerId});
+                        deadPlayer.alive = false;
+                        deadPlayer.deathReason = 'Died N' + game.day;
+                        deadPlayers.push(deadPlayer);
                     }
                 }
                 // start day
@@ -642,11 +646,11 @@ var mainLoop = function() {
                 syncMessage(game.channelId, `**All players have finished night actions!**`);
                 syncMessage(game.channelId, `***${s(deadPlayers.length, 'player', 's have', ' has')} died.***`, 1000);
                 for (var i = 0; i < deadPlayers.length; i++) {
-                    var deadPlayer = _.find(game.players, {id: deadPlayers[i]});
+                    var deadPlayer = deadPlayers[i];
                     syncMessage(game.channelId, `<@${deadPlayer.id}>, the **${deadPlayer.faction} ${getRole(deadPlayer.role).name}**, has died!`, 1000);
                 }
                 syncMessage(game.channelId, `Day ${game.day} is now starting.`, 2000);
-                printAlivePlayers(game.channelId);
+                printCurrentPlayers(game.channelId);
                 printDayState(game.channelId);
             }
         }
