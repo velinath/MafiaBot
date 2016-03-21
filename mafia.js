@@ -24,14 +24,14 @@ store.setItemSync('data', data);
 var mafiabot = new Discord.Client();
 
 // synchronous messages
-var mafiabot.syncMessage = (channelId, content, delay) => {
+mafiabot.syncMessage = (channelId, content, delay) => {
     data.syncMessages.push({
         channelId: channelId,
         content: content,
         delay: parseInt(delay) || 0,
     });
 };
-var mafiabot.syncReply = (message, content, delay) => {
+mafiabot.syncReply = (message, content, delay) => {
     mafiabot.syncMessage(message.channel.id, message.author + ', ' + content, delay);
 };
 var readyToSendSyncMessage = true;
