@@ -8,5 +8,5 @@ module.exports = {
     mainLoopInterval: 250,
     syncMessageTimeout: 2000,
 
-    nightActionBufferTime: 5*1000,
+    nightActionBufferTime: 20*1000,
 };
