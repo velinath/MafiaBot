@@ -20,7 +20,7 @@ module.exports = (ext) => {
                 var canDoActionResult = ext.canDoAction ? ext.canDoAction(p) : true;
                 if (canDoActionResult === true) {
                     var target = closestPlayer(p.args[1], p.game.players);
-                    if (target && target.alive){// && target.id != p.player.id) {
+                    if (target && target.alive) {
                         _.pullAllBy(p.game.nightActions, [{playerId: p.player.id}], 'playerId');
                         p.game.nightActions.push({ 
                             action: ext.actionText,
