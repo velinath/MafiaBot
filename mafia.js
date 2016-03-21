@@ -93,8 +93,9 @@ var checkForLynch = channelId => {
                     lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
                 }
                 gameInChannel.state = STATE.NIGHT;
-                for (var i = 0; i < gameInChannel.players.length; i++) {
-                    var player = gameInChannel.players[i];
+                var livePlayers = _.filter(gameInChannel.players, 'alive');
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
                     fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
                 }
                 mafiabot.syncMessage(channelId, `**It is now night. Send in your night actions via PM.**`, 3000);
@@ -335,8 +336,9 @@ var baseCommands = [
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
                         gameInChannel.day = 1;
-                        for (var i = 0; i < gameInChannel.players.length; i++) {
-                            var player = gameInChannel.players[i];
+                        var livePlayers = _.filter(gameInChannel.players, 'alive');
+                        for (var i = 0; i < livePlayers.length; i++) {
+                            var player = livePlayers[i];
                             fireEvent(getRole(player.role).onGameStart, {game: gameInChannel, player: player});
                         }
                         mafiabot.syncMessage(message.channel.id, `All players have confirmed and host <@${gameInChannel.hostId}> is now starting the game of mafia!`);
@@ -619,20 +621,20 @@ var mainLoop = function() {
             }
 
             if (game.timeToNightActionResolution <= 0) {
-                for (var i = 0; i < game.players.length; i++) {
-                    var player = game.players[i];
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
                     fireEvent(getRole(player.role).onBlockingPhase, {game: game, player: player});
                 }
-                for (var i = 0; i < game.players.length; i++) {
-                    var player = game.players[i];
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
                     fireEvent(getRole(player.role).onTargetingPhase, {game: game, player: player});
                 }
-                for (var i = 0; i < game.players.length; i++) {
-                    var player = game.players[i];
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
                     fireEvent(getRole(player.role).onActionPhase, {game: game, player: player});
                 }
-                for (var i = 0; i < game.players.length; i++) {
-                    var player = game.players[i];
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
                     fireEvent(getRole(player.role).onNightResolved, {game: game, player: player});
                 }
                 // figure out who died
