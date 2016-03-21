@@ -24,15 +24,15 @@ store.setItemSync('data', data);
 var mafiabot = new Discord.Client();
 
 // synchronous messages
-var syncMessage = (channelId, content, delay) => {
+var mafiabot.syncMessage = (channelId, content, delay) => {
     data.syncMessages.push({
         channelId: channelId,
         content: content,
         delay: parseInt(delay) || 0,
     });
 };
-var syncReply = (message, content, delay) => {
-    syncMessage(message.channel.id, message.author + ', ' + content, delay);
+var mafiabot.syncReply = (message, content, delay) => {
+    mafiabot.syncMessage(message.channel.id, message.author + ', ' + content, delay);
 };
 var readyToSendSyncMessage = true;
 var timeLastSentSyncMessage = new Date();
@@ -81,14 +81,14 @@ var checkForLynch = channelId => {
         var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
         for (var targetId in votesByTarget) {
             if (votesByTarget[targetId].length >= votesRequired) {
-                syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
-                syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
-                syncMessage(channelId, `**!! *NO TALKING AT NIGHT* !!**`);
+                mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
+                mafiabot.syncMessage(channelId, `**!! *NO TALKING AT NIGHT* !!**`);
                 if (targetId == 'NO LYNCH') {
-                    syncMessage(channelId, `No one was lynched.`, 1000);
+                    mafiabot.syncMessage(channelId, `No one was lynched.`, 1000);
                 } else {
                     var lynchedPlayer = _.find(gameInChannel.players, {id: targetId});
-                    syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${lynchedPlayer.faction} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
+                    mafiabot.syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${lynchedPlayer.faction} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
                     lynchedPlayer.alive = false;
                     lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
                 }
@@ -97,7 +97,7 @@ var checkForLynch = channelId => {
                     var player = gameInChannel.players[i];
                     fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
                 }
-                syncMessage(channelId, `**It is now night. Send in your night actions via PM.**`, 3000);
+                mafiabot.syncMessage(channelId, `**It is now night. Send in your night actions via PM.**`, 3000);
                 break;
             }
         }
@@ -118,7 +118,7 @@ var printCurrentPlayers = channelId => {
                 output += `~~\`${player.name}\`~~ - ${player.faction} ${getRole(player.role).name} - *${player.deathReason}*`;
             }
         }
-        syncMessage(channelId, output);
+        mafiabot.syncMessage(channelId, output);
         return true;
     }
     return false;
@@ -131,7 +131,7 @@ var printUnconfirmedPlayers = channelId => {
             ? `${s(unconfirmedPlayers.length, 'player')} still must ##confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
-        syncMessage(channelId, output);
+        mafiabot.syncMessage(channelId, output);
         return true;
     }
     return false;
@@ -139,7 +139,7 @@ var printUnconfirmedPlayers = channelId => {
 var printDayState = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel && gameInChannel.day > 0) {
-        syncMessage(channelId, 
+        mafiabot.syncMessage(channelId, 
 `It is currently **${gameInChannel.state == STATE.DAY ? 'DAY' : 'NIGHT'} ${gameInChannel.day}** in game hosted by <@${gameInChannel.hostId}>!
 **${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(gameInChannel.players)} to lynch!**
 Use ##vote, ##NL, and ##unvote commands to vote.`
@@ -156,7 +156,7 @@ var printCurrentVotes = channelId => {
         for (var i = 0; i < votesByTarget.length; i++) {
             voteOutput += `\n(${votesByTarget[i].length}) <@${votesByTarget[i][0].targetId}>: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '<@' + vote.playerId + '>'; }).join(', ')}`;
         }
-        syncMessage(channelId,
+        mafiabot.syncMessage(channelId,
 `**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(gameInChannel.players)} to lynch!**
 Use ##vote, ##NL, and ##unvote commands to vote.${voteOutput}`
             );
@@ -320,7 +320,7 @@ var baseCommands = [
                 if (gameInChannel.hostId == message.author.id) {
                     if (gameInChannel.state == STATE.INIT) {
                         gameInChannel.state = STATE.CONFIRMING;
-                        syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **##confirm** in this channel to confirm your role.`);
+                        mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **##confirm** in this channel to confirm your role.`);
                         printCurrentPlayers(message.channel.id);
                         for (var i = 0; i < gameInChannel.players.length; i++) {
                             var player = gameInChannel.players[i];
@@ -335,7 +335,7 @@ var baseCommands = [
                             var player = gameInChannel.players[i];
                             fireEvent(getRole(player.role).onGameStart, {game: gameInChannel, player: player});
                         }
-                        syncMessage(message.channel.id, `All players have confirmed and host <@${gameInChannel.hostId}> is now starting the game of mafia!`);
+                        mafiabot.syncMessage(message.channel.id, `All players have confirmed and host <@${gameInChannel.hostId}> is now starting the game of mafia!`);
                         printCurrentPlayers(message.channel.id);
                         printDayState(message.channel.id);
                     }
@@ -374,7 +374,7 @@ var baseCommands = [
                             },
                         };
                         gameInChannel.players.push(newPlayer);
-                        syncMessage(message.channel.id, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
+                        mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
                         printCurrentPlayers(message.channel.id);
                     }
                 } else {
@@ -396,7 +396,7 @@ var baseCommands = [
                 if (gameInChannel.state == STATE.INIT) {
                     if (_.find(gameInChannel.players, {id: message.author.id})) {
                         _.pullAllBy(gameInChannel.players, [{id: message.author.id}], 'id');
-                        syncMessage(message.channel.id, `<@${message.author.id}> left the current game hosted by <@${gameInChannel.hostId}>!`);
+                        mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> left the current game hosted by <@${gameInChannel.hostId}>!`);
                         printCurrentPlayers(message.channel.id);
                     } else {
                         mafiabot.reply(message, `You are not currently in the current game hosted by <@${gameInChannel.hostId}>!`);
@@ -451,7 +451,7 @@ var baseCommands = [
                         } else {
                             _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                             gameInChannel.votes.push({playerId: message.author.id, targetId: target.id, time: new Date()});
-                            syncMessage(message.channel.id, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
+                            mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
 
                             checkForLynch(message.channel.id);
                         }
@@ -475,7 +475,7 @@ var baseCommands = [
                 if (player && player.alive) {
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                     gameInChannel.votes.push({playerId: message.author.id, targetId: 'NO LYNCH', time: new Date()});
-                    syncMessage(message.channel.id, `<@${message.author.id}> voted to No Lynch!`);
+                    mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> voted to No Lynch!`);
 
                     checkForLynch(message.channel.id);
                 }
@@ -495,7 +495,7 @@ var baseCommands = [
                     var vote = _.find(gameInChannel.votes, {playerId: message.author.id});
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                     var targetString = vote ? ` <@${vote.targetId}>` : '... nothing';
-                    syncMessage(message.channel.id, `<@${message.author.id}> unvoted${targetString}!`);
+                    mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> unvoted${targetString}!`);
                     printCurrentVotes(message.channel.id);
                 }
             }
@@ -643,13 +643,13 @@ var mainLoop = function() {
                 game.votes.length = 0;
                 game.nightActions.length = 0;
                 game.nightKills = {};
-                syncMessage(game.channelId, `**All players have finished night actions!**`);
-                syncMessage(game.channelId, `***${s(deadPlayers.length, 'player', 's have', ' has')} died.***`, 1000);
+                mafiabot.syncMessage(game.channelId, `**All players have finished night actions!**`);
+                mafiabot.syncMessage(game.channelId, `***${s(deadPlayers.length, 'player', 's have', ' has')} died.***`, 1000);
                 for (var i = 0; i < deadPlayers.length; i++) {
                     var deadPlayer = deadPlayers[i];
-                    syncMessage(game.channelId, `<@${deadPlayer.id}>, the **${deadPlayer.faction} ${getRole(deadPlayer.role).name}**, has died!`, 1000);
+                    mafiabot.syncMessage(game.channelId, `<@${deadPlayer.id}>, the **${deadPlayer.faction} ${getRole(deadPlayer.role).name}**, has died!`, 1000);
                 }
-                syncMessage(game.channelId, `Day ${game.day} is now starting.`, 2000);
+                mafiabot.syncMessage(game.channelId, `Day ${game.day} is now starting.`, 2000);
                 printCurrentPlayers(game.channelId);
                 printDayState(game.channelId);
             }
