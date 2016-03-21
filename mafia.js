@@ -420,7 +420,7 @@ var baseCommands = [
                 var player = _.find(gameInChannel.players, {id: message.author.id});
                 if (player) {
                     player.confirmed = true;
-                    syncReply(message, `Thanks for confirming for the current game hosted by <@${gameInChannel.hostId}>!`);
+                    mafiabot.syncReply(message, `Thanks for confirming for the current game hosted by <@${gameInChannel.hostId}>!`);
                     printUnconfirmedPlayers(message.channel.id);
 
                     var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
