@@ -290,8 +290,9 @@ var baseCommands = [
                 mafiabot.reply(message, `A game is already running in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>!`);
             } else {
                 gameInChannel = {
-                    channelId: message.channel.id,
                     hostId: message.author.id,
+                    channelId: message.channel.id,
+                    mafiaChannelId: null,
                     players: [],
                     votesToEndGame: [],
                     state: STATE.INIT,
@@ -315,6 +316,7 @@ var baseCommands = [
             var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             var endGame = becauseOf => {
                 _.remove(data.games, gameInChannel);
+                mafiabot.deleteChannel(gameInChannel.mafiaChannelId);
                 mafiabot.sendMessage(message.channel, `${becauseOf} ended game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>! 😥`);
             };
             if (gameInChannel) {
@@ -354,15 +356,31 @@ var baseCommands = [
             if (gameInChannel) {
                 if (gameInChannel.hostId == message.author.id) {
                     if (gameInChannel.state == STATE.INIT) {
-                        gameInChannel.state = STATE.CONFIRMING;
-                        mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **${pre}confirm** in this channel to confirm your role.`);
-                        printCurrentPlayers(message.channel.id);
-                        for (var i = 0; i < gameInChannel.players.length; i++) {
-                            var player = gameInChannel.players[i];
-                            player.faction = ['Town', 'Mafia'][Math.floor(Math.random() * 2)];
-                            player.role = roles[Math.floor(Math.random() * roles.length)].id;
-                            mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
-                        }
+                        mafiabot.createChannel(message.channel, 'mafia' + Math.random().toString().substring(2), 'text', (error, mafiaChannel) => {
+                            if (mafiaChannel) {
+                                gameInChannel.state = STATE.CONFIRMING;
+                                gameInChannel.mafiaChannelId = mafiaChannel.id;
+                                mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **${pre}confirm** in this channel to confirm your role.`);
+                                printCurrentPlayers(message.channel.id);
+                                for (var i = 0; i < gameInChannel.players.length; i++) {
+                                    var player = gameInChannel.players[i];
+                                    player.faction = ['Town', 'Mafia'][Math.floor(Math.random() * 2)];
+                                    player.role = roles[Math.floor(Math.random() * roles.length)].id;
+                                    mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                                }
+
+                                var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
+                                var mafiaPlayers = gameInChannel.players;//_.filter(gameInChannel.players, {faction: 'Mafia'});
+                                mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false });
+                                for (var i = 0; i < mafiaPlayers.length; i++) {
+                                    var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
+                                    mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true });
+                                    mafiabot.sendMessage(mafiaPlayer, `Use the channel <#${mafiaChannel.id}> to chat with your fellow Mafia team members, and to send in your nightly kill.`);
+                                }
+                                mafiabot.syncMessage(mafiaChannel.id, `**Welcome to the mafia team!**\nYour team is:${listUsers(_.map(mafiaPlayers, 'id'))}`);
+                                mafiabot.syncMessage(mafiaChannel.id, `As a team you have **1 kill each night**. Use the ***${pre}kill*** command to use that ability when I prompt you in this chat.`);
+                            }
+                        });
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
                         gameInChannel.day = 1;
@@ -601,6 +619,11 @@ mafiabot.on("message", message => {
                 fireEvent(role.onPMCommand, {message: message, args: args, game: gameWithPlayer, player: player});
             }
         }
+    }
+
+    // receiving message from mafia channel
+    var game = _.find(data.games, {mafiaChannelId: message.channel.id});
+    if (game) {
     }
 
     // save data after every message
