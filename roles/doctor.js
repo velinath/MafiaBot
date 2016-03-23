@@ -6,7 +6,7 @@ var closestPlayer = require('../closestPlayer.js');
 var self = templates.extend(templates.singleTarget, {
     id: 'doctor',
     name: 'Doctor',
-    description: `You can save someone from dying each night with the ***--save*** command.`,
+    description: `You can save someone from dying each night with the ***${pre}save*** command.`,
     command: 'save',
     commandGerund: 'saving',
     commandText: 'protect a target from dying tonight',

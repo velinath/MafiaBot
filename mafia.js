@@ -1,5 +1,8 @@
 "use strict";
+//global
+global.pre = '--'; // command prefix that can be used across all files
 
+// requires
 var config = require('./config.js');
 var _ = require('lodash');
 var store = require('node-persist');
@@ -129,7 +132,7 @@ var printUnconfirmedPlayers = channelId => {
     if (gameInChannel) {
         var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
         var output = unconfirmedPlayers.length 
-            ? `${s(unconfirmedPlayers.length, 'player')} still must --confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
+            ? `${s(unconfirmedPlayers.length, 'player')} still must ${pre}confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
         mafiabot.syncMessage(channelId, output);
@@ -142,7 +145,7 @@ var printDayState = channelId => {
     if (gameInChannel && gameInChannel.day > 0) {
         var output = `It is currently **${gameInChannel.state == STATE.DAY ? 'DAY' : 'NIGHT'} ${gameInChannel.day}** in game hosted by <@${gameInChannel.hostId}>!`
         if (gameInChannel.state == STATE.DAY) {
-            output += `\n**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**\nUse --vote, --NL, and --unvote commands to vote.`;
+            output += `\n**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**\nUse ${pre}vote, ${pre}NL, and ${pre}unvote commands to vote.`;
         } else {
             output += `\n**Send in your night actions via PM. Every player must send in a night action, regardless of role!**.`;
         }
@@ -169,7 +172,7 @@ var printCurrentVotes = channelId => {
         }
         mafiabot.syncMessage(channelId,
 `**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**
-Use --vote, --NL, and --unvote commands to vote.${voteOutput}`
+Use ${pre}vote, ${pre}NL, and ${pre}unvote commands to vote.${voteOutput}`
             );
         return true;
     }
@@ -177,7 +180,6 @@ Use --vote, --NL, and --unvote commands to vote.${voteOutput}`
 }
 
 // commands
-var commandPrefix = '--';
 var baseCommands = [
     {
         commands: ['commands', 'help', 'wut'],
@@ -188,7 +190,7 @@ var baseCommands = [
             var output = `\nType one of the following commands to interact with MafiaBot:`;
             for (var i = 0; i < baseCommands.length; i++) {
                 var comm = baseCommands[i];
-                output += `\n**${commandPrefix}${comm.commands.join('/')}** - ${comm.description}${comm.adminOnly ? ' - *Admin Only*' : ''}${comm.activatedOnly ? ' - *Activated Channel Only*' : ''}`;
+                output += `\n**${pre}${comm.commands.join('/')}** - ${comm.description}${comm.adminOnly ? ' - *Admin Only*' : ''}${comm.activatedOnly ? ' - *Activated Channel Only*' : ''}`;
             }
             mafiabot.reply(message, output);
         },
@@ -256,10 +258,10 @@ var baseCommands = [
         activatedOnly: false,
         onMessage: message => {
             if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
-                mafiabot.reply(message, `MafiaBot is already activated in *<#${message.channel.id}>*! Use *--deactivatemafia* to deactivate MafiaBot on this channel.`);
+                mafiabot.reply(message, `MafiaBot is already activated in *<#${message.channel.id}>*! Use *${pre}deactivatemafia* to deactivate MafiaBot on this channel.`);
             } else {
                 data.channelsActivated.push(message.channel.id);
-                mafiabot.reply(message, `MafiaBot has been activated in *<#${message.channel.id}>*! Use *--creategame* to start playing some mafia!`);
+                mafiabot.reply(message, `MafiaBot has been activated in *<#${message.channel.id}>*! Use *${pre}creategame* to start playing some mafia!`);
             }
         },
     },
@@ -273,7 +275,7 @@ var baseCommands = [
                 data.channelsActivated.splice(data.channelsActivated.indexOf(message.channel.id), 1);
                 mafiabot.reply(message, `MafiaBot has been deactivated in *<#${message.channel.id}>*!`);
             } else {
-                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *--activatemafia* to activate MafiaBot on this channel.`);
+                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *${pre}activatemafia* to activate MafiaBot on this channel.`);
             }
         },
     },
@@ -353,13 +355,13 @@ var baseCommands = [
                 if (gameInChannel.hostId == message.author.id) {
                     if (gameInChannel.state == STATE.INIT) {
                         gameInChannel.state = STATE.CONFIRMING;
-                        mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **--confirm** in this channel to confirm your role.`);
+                        mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **${pre}confirm** in this channel to confirm your role.`);
                         printCurrentPlayers(message.channel.id);
                         for (var i = 0; i < gameInChannel.players.length; i++) {
                             var player = gameInChannel.players[i];
                             player.faction = ['Town', 'Mafia'][Math.floor(Math.random() * 2)];
                             player.role = roles[Math.floor(Math.random() * roles.length)].id;
-                            mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **--confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                            mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                         }
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
@@ -542,9 +544,9 @@ var baseCommands = [
 mafiabot.on("message", message => {
     var contentLower = message.content.toLowerCase();
     var args = message.content.split(/[ :]/);
-    args[0] = args[0].substring(commandPrefix.length);
+    args[0] = args[0].substring(pre.length);
     // go through all the base commands and see if any of them have been called
-    if (contentLower.indexOf(commandPrefix) == 0) {
+    if (contentLower.indexOf(pre) == 0) {
         var anyCommandMatched = false;
         for (var i = 0; i < baseCommands.length; i++) {
             var comm = baseCommands[i];
@@ -575,7 +577,7 @@ mafiabot.on("message", message => {
                     if (!defaultComm.activatedOnly || activatedCheck(message)) {
                         // args needs to be slightly modified for default commands (so '--xxx' has args ['', 'xxx'])
                         var args = [''].concat(message.content.split(/[ :]/));
-                        args[1] = args[1].substring(commandPrefix.length);
+                        args[1] = args[1].substring(pre.length);
                         defaultComm.onMessage(message, args);
                     }
                 }
@@ -595,7 +597,7 @@ mafiabot.on("message", message => {
         if (gameWithPlayer) {
             var player = _.find(gameWithPlayer.players, {id: message.author.id});
             var role = getRole(player.role);
-            if (contentLower.indexOf(commandPrefix) == 0) {
+            if (contentLower.indexOf(pre) == 0) {
                 fireEvent(role.onPMCommand, {message: message, args: args, game: gameWithPlayer, player: player});
             }
         }

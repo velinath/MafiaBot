@@ -6,7 +6,7 @@ var closestPlayer = require('../closestPlayer.js');
 var self = templates.extend(templates.singleTarget, {
     id: 'roleblocker',
     name: 'Roleblocker',
-    description: `You can block someone from performing their role each night with the ***--block*** command.`,
+    description: `You can block someone from performing their role each night with the ***${pre}block*** command.`,
     command: 'block',
     commandGerund: 'blocking',
     commandText: 'block a target from performing their role',

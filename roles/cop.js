@@ -6,7 +6,7 @@ var closestPlayer = require('../closestPlayer.js');
 var self = templates.extend(templates.singleTarget, {
     id: 'cop',
     name: 'Cop',
-    description: `You can scan someone to determine if they are innocent or not each night with the ***--scan*** command.`,
+    description: `You can scan someone to determine if they are innocent or not each night with the ***${pre}scan*** command.`,
     command: 'scan',
     commandGerund: 'scanning',
     commandText: 'determine the innocence of a target',
