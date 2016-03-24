@@ -12,7 +12,7 @@ var self = templates.extend(templates.singleTarget, {
     commandText: 'protect a target from dying tonight',
     actionText: 'doctor save',
     onActionPhase: (p) => {
-        var action = _.find(p.game.nightActions, {playerId: p.player.id});
+        var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
             p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) - Infinity;
         }

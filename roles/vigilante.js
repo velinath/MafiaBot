@@ -20,7 +20,7 @@ var self = templates.extend(templates.singleTarget, {
         return p.player.roleData.shotCount > 0 ? true : 'You are out of bullets for the rest of the game.';
     },
     onActionPhase: (p) => {
-        var action = _.find(p.game.nightActions, {playerId: p.player.id});
+        var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
             p.player.roleData.shotCount--;
             p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) + 1;

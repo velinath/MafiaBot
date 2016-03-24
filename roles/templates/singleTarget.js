@@ -36,7 +36,7 @@ module.exports = (ext) => {
                     p.mafiabot.reply(p.message, `You can't ${ext.command} tonight. ${canDoActionResult}`);
                 }
             } else if (p.args[0] == 'cancel' || p.args[0] == 'noaction') {
-                var action = _.find(p.game.nightActions, {playerId: p.player.id});
+                var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
                 if (action) {
                     p.player.roleData.didAction = false;
                     p.mafiabot.reply(p.message, `You have canceled ${ext.commandGerund} **<@${action.targetId}>**.`);

@@ -102,6 +102,8 @@ var checkForLynch = channelId => {
                         var player = livePlayers[i];
                         fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
                     }
+                    gameInChannel.mafiaDidNightAction = false;
+                    mafiabot.sendMessage(gameInChannel.mafiaChannelId, `It is now night ${gameInChannel.day}! Use the ***${pre}kill*** command in this chat to choose who the mafia will kill tongiht, ***${pre}cancel*** to cancel.\n*IMPORTANT: The person who sends the kill command will be the one to do the kill, for role purposes.*\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`);
                     printDayState(channelId);
                 }
                 return true;
@@ -343,6 +345,7 @@ var baseCommands = [
                     votes: [],
                     nightActions: [],
                     nightKills: {},
+                    mafiaDidNightAction: false,
                 };
                 data.games.push(gameInChannel);
                 mafiabot.sendMessage(message.channel, `Starting a game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>!`);
@@ -670,6 +673,37 @@ mafiabot.on("message", message => {
     // receiving message from mafia channel
     var game = _.find(data.games, {mafiaChannelId: message.channel.id});
     if (game) {
+        // terrible chunk of code to emulate a vig kill
+        var player = _.find(game.players, {id: message.author.id});
+        var actionText = 'mafia kill';
+        if (game.state == STATE.NIGHT && player && player.alive) {
+            if (args[0] == 'kill') {
+                var target = closestPlayer(args[1], game.players);
+                if (target && target.alive) {
+                    game.nightActions = _.reject(game.nightActions, {action: actionText}); // clear any mafia kill, not just the current player's
+                    game.nightActions.push({ 
+                        action: actionText,
+                        playerId: player.id,
+                        targetId: target.id,
+                    });
+                    game.mafiaDidNightAction = true;
+                    mafiabot.reply(message, `You are killing **<@${target.id}>** tonight! Type ***${pre}cancel*** to cancel.`);
+                } else {
+                    mafiabot.reply(message, `*${args[1]}* is not a valid target!`);
+                }
+            } else if (args[0] == 'cancel' || args[0] == 'noaction') {
+                var action = _.find(game.nightActions, {action: actionText});
+                if (action) {
+                    game.mafiaDidNightAction = false;
+                    mafiabot.reply(message, `You have canceled killing **<@${action.targetId}>**.`);
+                }
+                game.nightActions = _.reject(game.nightActions, {action: actionText});
+            }
+            if (args[0] == 'noaction') {
+                game.mafiaDidNightAction = true;
+                mafiabot.reply(message, `You are taking no action tonight.`);
+            }
+        }
     }
 
     // save data after every message
@@ -712,6 +746,7 @@ var mainLoop = function() {
                 var result = fireEvent(getRole(player.role).isFinished, {game: game, player: player});
                 return result === null || result === true;
             });
+            allPlayerNightActionsFinished = allPlayerNightActionsFinished && game.mafiaDidNightAction;
             if (allPlayerNightActionsFinished) {
                 game.timeToNightActionResolution -= dt;
                 console.log(game.timeToNightActionResolution);
@@ -731,6 +766,11 @@ var mainLoop = function() {
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];
                     fireEvent(getRole(player.role).onActionPhase, {game: game, player: player});
+                }
+                // just do the mafia kill action here, why not
+                var mafiaAction = _.find(game.nightActions, {action: 'mafia kill'});
+                if (mafiaAction) {
+                    game.nightKills[mafiaAction.targetId] = (game.nightKills[mafiaAction.targetId] || 0) + 1;
                 }
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];

@@ -12,7 +12,7 @@ var self = templates.extend(templates.singleTarget, {
     commandText: 'determine the innocence of a target',
     actionText: 'cop scan',
     onActionPhase: (p) => {
-        var action = _.find(p.game.nightActions, {playerId: p.player.id});
+        var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
             var target = _.find(p.game.players, {id: action.targetId});
             var innocent = target.faction != 'Mafia';
