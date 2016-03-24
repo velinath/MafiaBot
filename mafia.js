@@ -95,14 +95,44 @@ var checkForLynch = channelId => {
                     lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
                 }
                 gameInChannel.state = STATE.NIGHT;
-                var livePlayers = _.filter(gameInChannel.players, 'alive');
-                for (var i = 0; i < livePlayers.length; i++) {
-                    var player = livePlayers[i];
-                    fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
+                if (!checkForGameOver(channelId)) {
+                    var livePlayers = _.filter(gameInChannel.players, 'alive');
+                    for (var i = 0; i < livePlayers.length; i++) {
+                        var player = livePlayers[i];
+                        fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
+                    }
+                    printDayState(channelId);
                 }
-                printDayState(channelId);
                 return true;
             }
+        }
+    }
+    return false;
+}
+var checkForGameOver = channelId => {
+    var gameInChannel = _.find(data.games, {channelId: channelId});
+    if (gameInChannel) {
+        var livePlayers = _.filter(gameInChannel.players, 'alive');
+        var liveTown = _.filter(livePlayers, {faction: 'Town'});
+        var liveMafia = _.filter(livePlayers, {faction: 'Mafia'});
+        if (liveTown.length && liveMafia.length) {
+            return false;
+        } else {
+            gameInChannel.state = STATE.GAMEOVER;
+            for (var i = 0; i < livePlayers.length; i++) {
+                livePlayers[i].alive = false;
+                livePlayers[i].deathReason = 'Survivor!';
+            }
+            if (liveTown.length && !liveMafia.length) {
+                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THE TOWN HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: 'Town'}), 'id'))}`);
+            } else if (liveMafia.length && !liveTown.length) {
+                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THE MAFIA TEAM HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: 'Mafia'}), 'id'))}`);
+            } else if (!liveTown.length && !liveMafia.length) {
+                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THERE WAS... A TIE?!**`);
+            }
+            printCurrentPlayers(channelId);
+            mafiabot.syncMessage(channelId, `Use the ***${pre}endgame*** command to end the game (and delete the mafia chat forever) so you can start a new game!`);
+            return true;
         }
     }
     return false;
@@ -712,9 +742,11 @@ var mainLoop = function() {
                     var deadPlayer = deadPlayers[i];
                     mafiabot.syncMessage(game.channelId, `<@${deadPlayer.id}>, the **${deadPlayer.faction} ${getRole(deadPlayer.role).name}**, has died!`, 1000);
                 }
-                mafiabot.syncMessage(game.channelId, `Day ${game.day} is now starting.`, 2000);
-                printCurrentPlayers(game.channelId);
-                printDayState(game.channelId);
+                if (!checkForGameOver(game.channelId)) {
+                    mafiabot.syncMessage(game.channelId, `Day ${game.day} is now starting.`, 2000);
+                    printCurrentPlayers(game.channelId);
+                    printDayState(game.channelId);
+                }
             }
         }
     }
