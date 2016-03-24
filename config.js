@@ -9,4 +9,5 @@ module.exports = {
     syncMessageTimeout: 2000,
 
     nightActionBufferTime: 20*1000,
+    minimumPlayers: 1,
 };
