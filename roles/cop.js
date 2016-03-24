@@ -1,7 +1,7 @@
-var _ = require('lodash');
-var templates = require('./templates');
-var STATE = require('../gameStates.js');
-var closestPlayer = require('../closestPlayer.js');
+const _ = require('lodash');
+const templates = require('./templates');
+const STATE = require('../gameStates.js');
+const closestPlayer = require('../closestPlayer.js');
 
 var self = templates.extend(templates.singleTarget, {
     id: 'cop',

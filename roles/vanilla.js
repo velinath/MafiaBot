@@ -1,4 +1,4 @@
-var templates = require('./templates');
+const templates = require('./templates');
 
 var self = templates.extend(templates.noAction, {
     id: 'vanilla',

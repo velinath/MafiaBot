@@ -1,11 +1,11 @@
-var _ = require('lodash');
-var levenshtein = (function() { // wrap levenshtein function to get 0.0 - 1.0 similarity range
-    var fl = require('fast-levenshtein'); 
+const _ = require('lodash');
+const levenshtein = (function() { // wrap levenshtein function to get 0.0 - 1.0 similarity range
+    const fl = require('fast-levenshtein'); 
     return function(a, b) { 
         return 1 - fl.get(a, b)/Math.max(a.length, b.length); 
     }; 
 })();
-var jarowinkler = require('jaro-winkler');
+const jarowinkler = require('jaro-winkler');
 
 module.exports = (str, players) => {
     str = (str || '').toLowerCase();

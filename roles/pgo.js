@@ -1,5 +1,5 @@
-var _ = require('lodash');
-var templates = require('./templates');
+const _ = require('lodash');
+const templates = require('./templates');
 
 var self = templates.extend(templates.noAction, {
     id: 'pgo',

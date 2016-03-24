@@ -3,16 +3,17 @@
 global.pre = '--'; // command prefix that can be used across all files
 
 // requires
-var config = require('./config.js');
-var _ = require('lodash');
-var store = require('node-persist');
-var Discord = require('discord.js');
+const fs = require('fs');
+const config = require('./config.js');
+const _ = require('lodash');
+const store = require('node-persist');
+const Discord = require('discord.js');
 
-var roles = require('./roles');
-var STATE = require('./gameStates.js');
+const roles = require('./roles');
+const STATE = require('./gameStates.js');
 
-var s = require('./pluralize.js');
-var closestPlayer = require('./closestPlayer.js');
+const s = require('./pluralize.js');
+const closestPlayer = require('./closestPlayer.js');
 
 // init stuff
 store.initSync();
@@ -223,6 +224,17 @@ var baseCommands = [
                 output += `\n**${pre}${comm.commands.join('/')}** - ${comm.description}${comm.adminOnly ? ' - *Admin Only*' : ''}${comm.activatedOnly ? ' - *Activated Channel Only*' : ''}`;
             }
             mafiabot.reply(message, output);
+        },
+    },
+    {
+        commands: ['feedback'],
+        description: 'Send feedback and comments and suggestions about MafiaBot to the admin',
+        adminOnly: false,
+        activatedOnly: false,
+        onMessage: message => {
+            var output = `## Server: ${message.channel.server.name} | Channel: ${message.channel.name} | User: ${message.author.name} | ${new Date()} | ${new Date(message.timestamp)} ##\n${message.content.substring(11)}\n\n`;
+            fs.appendFile(config.feedbackFilePath, output);
+            mafiabot.reply(message, `Thanks for the feedback!`);
         },
     },
     {
