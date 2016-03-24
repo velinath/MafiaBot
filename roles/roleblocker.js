@@ -14,7 +14,7 @@ var self = templates.extend(templates.singleTarget, {
     onBlockingPhase: (p) => {
         var action = _.find(p.game.nightActions, {playerId: p.player.id});
         if (action) {
-            _.pullAllBy(p.game.nightActions, [{playerId: action.targetId}], 'playerId');
+            p.game.nightActions = _.reject(p.game.nightActions, {playerId: action.targetId});
             p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: action.targetId}), `**You have been roleblocked!**`);
         }
     },

@@ -21,7 +21,7 @@ module.exports = (ext) => {
                 if (canDoActionResult === true) {
                     var target = closestPlayer(p.args[1], p.game.players);
                     if (target && target.alive) {
-                        _.pullAllBy(p.game.nightActions, [{playerId: p.player.id}], 'playerId');
+                        p.game.nightActions = _.reject(p.game.nightActions, {action: ext.actionText, playerId: p.player.id});
                         p.game.nightActions.push({ 
                             action: ext.actionText,
                             playerId: p.player.id,
@@ -41,7 +41,7 @@ module.exports = (ext) => {
                     p.player.roleData.didAction = false;
                     p.mafiabot.reply(p.message, `You have canceled ${ext.commandGerund} **<@${action.targetId}>**.`);
                 }
-                _.pullAllBy(p.game.nightActions, [{playerId: p.player.id}], 'playerId');
+                p.game.nightActions = _.reject(p.game.nightActions, {action: ext.actionText, playerId: p.player.id});
             }
             if (p.args[0] == 'noaction') {
                 p.player.roleData.noAction = true;
