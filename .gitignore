@@ -34,3 +34,4 @@ node_modules
 persist/
 *.sublime-project
 *.sublime-workspace
+feedback.txt
