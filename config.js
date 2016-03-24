@@ -1,6 +1,13 @@
-module.exports = {
-    email: '[INSERT THE 2-CHAR SHORT NAME OF OUR BOARD]mafiabot@gmail.com',
-    password: '[INSERT PHRASE THAT WE SAY TO GET TO THE TOP OF GOOGLE (LOWERCASE NO SPACES)]',
+const _ = require('lodash');
+
+var overrides = {};
+if (global.DEBUG) {
+    overrides = {
+        minimumPlayers: 1,     
+        nightActionBufferTime: 1*1000,   
+    };
+}
+module.exports = _.merge({
     admins: [
         '88020438474567680', // fool
     ],
@@ -9,6 +16,6 @@ module.exports = {
     mainLoopInterval: 250,
     syncMessageTimeout: 2000,
 
+    minimumPlayers: 3,
     nightActionBufferTime: 20*1000,
-    minimumPlayers: 1,
-};
+}, overrides);
