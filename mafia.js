@@ -192,7 +192,7 @@ var printCurrentVotes = channelId => {
     if (gameInChannel && gameInChannel.day > 0) {
         var voteOutput = '';
         if (gameInChannel.votes.length) {
-            var votesByTarget = _.sortBy(_.toArray(_.groupBy(gameInChannel.votes, 'targetId'), function(group) { return -group.length; }));
+            var votesByTarget = _.sortBy(_.toArray(_.groupBy(gameInChannel.votes, 'targetId')), function(group) { return -group.length; });
             for (var i = 0; i < votesByTarget.length; i++) {
                 var voteId = votesByTarget[i][0].targetId;
                 if (voteId !== 'NO LYNCH') {
