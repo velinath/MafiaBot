@@ -1,8 +1,6 @@
 const _ = require('lodash');
 const templates = require('./templates');
-const STATE = require('../gameStates.js');
 const s = require('../pluralize.js');
-const closestPlayer = require('../closestPlayer.js');
 
 var shotCount = 1;
 var self = templates.extend(templates.singleTarget, {
