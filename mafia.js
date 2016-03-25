@@ -270,7 +270,7 @@ var baseCommands = [
         onMessage: message => {
             var output = `## Server: ${message.channel.server.name} | Channel: ${message.channel.name} | User: ${message.author.name} | ${new Date()} | ${new Date(message.timestamp)} ##\n${message.content.substring(11)}\n\n`;
             fs.appendFile(config.feedbackFilePath, output);
-            mafiabot.reply(message, `Thanks for the feedback!`);
+            mafiabot.reply(message, `Thanks for the feedback! ❤`);
         },
     },
     {
@@ -625,7 +625,7 @@ var baseCommands = [
                     var target = getPlayerFromString(args[1], message.channel.id);
                     if (target) {
                         if (!target.alive) {
-                            mafiabot.reply(message, `You can't vote for the dead player ${args[1]}'!`);
+                            mafiabot.reply(message, `You can't vote for the dead player ${args[1]}!`);
                         } else if (target.id == message.author.id) {
                             mafiabot.reply(message, `You can't vote for yourself!`);
                         } else {
