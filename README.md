@@ -25,3 +25,6 @@ Install [Node Inspector](https://github.com/node-inspector/node-inspector), then
 ```sh
 $ node-debug mafia.js
 ```
+
+## Shout Out
+To Quick-Man for being the winner of the first ever real game of mafia coordinated by MafiaBot!

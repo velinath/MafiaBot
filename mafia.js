@@ -263,7 +263,7 @@ var baseCommands = [
         },
     },
     {
-        commands: ['feedback'],
+        commands: ['feedback', 'bug', 'bugreport'],
         description: 'Send feedback and comments and suggestions about MafiaBot to the admin',
         adminOnly: false,
         activatedOnly: false,
