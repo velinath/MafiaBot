@@ -84,9 +84,7 @@ var checkForLynch = channelId => {
         var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
         for (var targetId in votesByTarget) {
             if (votesByTarget[targetId].length >= votesRequired) {
-                mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
-                mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**`);
-                mafiabot.syncMessage(channelId, `**!! *NO TALKING AT NIGHT* !!**`);
+                mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**!! *NO TALKING AT NIGHT* !!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n`);
                 if (targetId == 'NO LYNCH') {
                     mafiabot.syncMessage(channelId, `No one was lynched.`, 1000);
                 } else {
@@ -101,9 +99,13 @@ var checkForLynch = channelId => {
                     for (var i = 0; i < livePlayers.length; i++) {
                         var player = livePlayers[i];
                         fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
+                        printCurrentPlayers(channelId, _.find(data.pmChannels, {playerId: player.id}).channelId);
                     }
+
                     gameInChannel.mafiaDidNightAction = false;
-                    mafiabot.sendMessage(gameInChannel.mafiaChannelId, `It is now night ${gameInChannel.day}! Use the ***${pre}kill*** command in this chat to choose who the mafia will kill tongiht, ***${pre}cancel*** to cancel.\n*IMPORTANT: The person who sends the kill command will be the one to do the kill, for role purposes.*\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`);
+                    mafiabot.sendMessage(gameInChannel.mafiaChannelId, `It is now night ${gameInChannel.day}! Use the ***${pre}kill*** command in this chat to choose who the mafia will kill tonight (ex: *${pre}kill fool*). ***${pre}cancel*** to cancel.\n*IMPORTANT: The person who sends the kill command will be the one to do the kill, for role purposes.*\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`);
+                    printCurrentPlayers(channelId, gameInChannel.mafiaChannelId);
+                    
                     printDayState(channelId);
                 }
                 return true;
@@ -142,7 +144,7 @@ var checkForGameOver = channelId => {
 }
 
 // printing
-var printCurrentPlayers = channelId => {
+var printCurrentPlayers = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by <@${gameInChannel.hostId}>:`;
@@ -155,12 +157,12 @@ var printCurrentPlayers = channelId => {
                 output += `~~\`${player.name}\`~~ - ${player.faction} ${getRole(player.role).name} - *${player.deathReason}*`;
             }
         }
-        mafiabot.syncMessage(channelId, output);
+        mafiabot.syncMessage(outputChannelId || channelId, output);
         return true;
     }
     return false;
 }
-var printUnconfirmedPlayers = channelId => {
+var printUnconfirmedPlayers = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
@@ -168,12 +170,12 @@ var printUnconfirmedPlayers = channelId => {
             ? `${s(unconfirmedPlayers.length, 'player')} still must ${pre}confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
-        mafiabot.syncMessage(channelId, output);
+        mafiabot.syncMessage(outputChannelId || channelId, output);
         return true;
     }
     return false;
 }
-var printDayState = channelId => {
+var printDayState = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel && gameInChannel.day > 0) {
         var output = `It is currently **${gameInChannel.state == STATE.DAY ? 'DAY' : 'NIGHT'} ${gameInChannel.day}** in game hosted by <@${gameInChannel.hostId}>!`
@@ -182,12 +184,12 @@ var printDayState = channelId => {
         } else {
             output += `\n**Send in your night actions via PM. Every player must send in a night action, regardless of role!**.`;
         }
-        mafiabot.syncMessage(channelId, output);
+        mafiabot.syncMessage(outputChannelId || channelId, output);
         return true;
     }
     return false;
 };
-var printCurrentVotes = channelId => {
+var printCurrentVotes = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel && gameInChannel.day > 0) {
         var voteOutput = '';
@@ -203,7 +205,7 @@ var printCurrentVotes = channelId => {
         } else {
             voteOutput += `**\nThere are currently no votes!**`;
         }
-        mafiabot.syncMessage(channelId,
+        mafiabot.syncMessage(outputChannelId || channelId,
 `**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**
 Use ${pre}vote, ${pre}NL, and ${pre}unvote commands to vote.${voteOutput}`
             );
@@ -424,7 +426,7 @@ var baseCommands = [
                                         mafiabot.sendMessage(mafiaPlayer, `Use the channel <#${mafiaChannel.id}> to chat with your fellow Mafia team members, and to send in your nightly kill.`);
                                     }
                                     mafiabot.syncMessage(mafiaChannel.id, `**Welcome to the mafia team!**\nYour team is:${listUsers(_.map(mafiaPlayers, 'id'))}`);
-                                    mafiabot.syncMessage(mafiaChannel.id, `As a team you have **1 kill each night**. Use the ***${pre}kill*** command to use that ability when I prompt you in this chat.`);
+                                    mafiabot.syncMessage(mafiaChannel.id, `As a team you have **1 kill each night**. Use the ***${pre}kill*** command (ex: *${pre}kill fool*) to use that ability when I prompt you in this chat.`);
                                 }
                             });
                         } else {

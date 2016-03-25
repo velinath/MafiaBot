@@ -10,7 +10,7 @@ module.exports = (ext) => {
         onNight: (p) => {
             p.player.roleData.didAction = false;
             p.player.roleData.noAction = false;
-            p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: p.player.id}), `It is now night ${p.game.day}! Use the ***${pre}${ext.command}*** command to ${ext.commandText}, ***${pre}cancel*** to cancel.\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`);
+            p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: p.player.id}), `It is now night ${p.game.day}! Use the ***${pre}${ext.command}*** command to ${ext.commandText} (ex: *${pre}${ext.command} fool*). ***${pre}cancel*** to cancel.\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`);
         },
         onPMCommand: (p) => {
             if (p.game.state != STATE.NIGHT) {
