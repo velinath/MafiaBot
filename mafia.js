@@ -94,12 +94,13 @@ var checkForLynch = channelId => {
                     lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
                 }
                 gameInChannel.state = STATE.NIGHT;
+                gameInChannel.nightActionReminderTime = config.nightActionReminderInterval;
                 if (!checkForGameOver(channelId)) {
                     var livePlayers = _.filter(gameInChannel.players, 'alive');
                     for (var i = 0; i < livePlayers.length; i++) {
                         var player = livePlayers[i];
                         fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
-                        printCurrentPlayers(channelId, _.find(data.pmChannels, {playerId: player.id}).channelId);
+                        printCurrentPlayers(channelId, player.id);
                     }
 
                     gameInChannel.mafiaDidNightAction = false;
@@ -354,6 +355,7 @@ var baseCommands = [
                     nightActions: [],
                     nightKills: {},
                     mafiaDidNightAction: false,
+                    nightActionReminderTime: config.nightActionReminderInterval,
                 };
                 data.games.push(gameInChannel);
                 mafiabot.sendMessage(message.channel, `Starting a game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>!`);
@@ -750,7 +752,8 @@ var mainLoop = function() {
         if (game.state == STATE.NIGHT) {
             var livePlayers = _.filter(game.players, 'alive');
             var liveTownPlayers = _.filter(livePlayers, {faction: 'Town'});
-            // check if all townies and the mafia chat have finished night actions
+
+            // check if all townies and the mafia chat have finished night actions and if so, start the day countdown
             var allTownNightActionsFinished = _.every(liveTownPlayers, (player) => {
                 var result = fireEvent(getRole(player.role).isFinished, {game: game, player: player});
                 return result === null || result === true;
@@ -763,6 +766,7 @@ var mainLoop = function() {
                 game.timeToNightActionResolution = config.nightActionBufferTime * (1 + Math.random()/2);
             }
 
+            // resolve night actions and begin day after countdown
             if (game.timeToNightActionResolution <= 0) {
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];
@@ -812,6 +816,26 @@ var mainLoop = function() {
                     printCurrentPlayers(game.channelId);
                     printDayState(game.channelId);
                 }
+            }
+
+            // send night action reminders
+            game.nightActionReminderTime -= dt;
+            if (game.nightActionReminderTime <= 0) {
+                var remind = (playerName, channelId) => {
+                    console.log('Reminding:', playerName);
+                    mafiabot.sendMessage(channelId, `**HEY! *LISTEN!!*** We're waiting for your night action! Remember to use the ***--noaction*** command to confirm you are active, even if you have no night power!`);
+                }
+                for (var i = 0; i < liveTownPlayers.length; i++) {
+                    var player = liveTownPlayers[i];
+                    var result = fireEvent(getRole(player.role).isFinished, {game: game, player: player});
+                    if (!(result === null || result === true)) {
+                        remind(player.name, player.id);
+                    }
+                }
+                if (!game.mafiaDidNightAction) {
+                    remind('Mafia', game.mafiaChannelId);
+                }
+                game.nightActionReminderTime = config.nightActionReminderInterval;
             }
         }
     }
