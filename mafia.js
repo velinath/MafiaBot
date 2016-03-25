@@ -103,7 +103,13 @@ var checkForLynch = channelId => {
                     }
 
                     gameInChannel.mafiaDidNightAction = false;
-                    mafiabot.sendMessage(gameInChannel.mafiaChannelId, `It is now night ${gameInChannel.day}! Use the ***${pre}kill*** command in this chat to choose who the mafia will kill tonight (ex: *${pre}kill fool*). ***${pre}cancel*** to cancel.\n*IMPORTANT: The person who sends the kill command will be the one to do the kill, for role purposes.*\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`);
+                    mafiabot.sendMessage(gameInChannel.mafiaChannelId, 
+`It is now night ${gameInChannel.day}! Use the ***${pre}kill*** command in this chat to choose who the mafia will kill tonight (ex: *${pre}kill fool*). ***${pre}cancel*** to cancel.
+Use the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.
+
+**IMPORTANT: The person who sends the kill command in this chat will be the one to perform the kill, for role purposes.**
+**ALSO: If you have a power role, you must send me a private message separate from this chat to make that action!**`
+                    );
                     printCurrentPlayers(channelId, gameInChannel.mafiaChannelId);
                     
                     printDayState(channelId);
@@ -742,16 +748,17 @@ var mainLoop = function() {
         var game = data.games[i];
 
         if (game.state == STATE.NIGHT) {
-            // check if all players have finished night actions
             var livePlayers = _.filter(game.players, 'alive');
-            var allPlayerNightActionsFinished = _.every(livePlayers, (player) => {
+            var liveTownPlayers = _.filter(livePlayers, {faction: 'Town'});
+            // check if all townies and the mafia chat have finished night actions
+            var allTownNightActionsFinished = _.every(liveTownPlayers, (player) => {
                 var result = fireEvent(getRole(player.role).isFinished, {game: game, player: player});
                 return result === null || result === true;
             });
-            allPlayerNightActionsFinished = allPlayerNightActionsFinished && game.mafiaDidNightAction;
-            if (allPlayerNightActionsFinished) {
+            allTownNightActionsFinished = allTownNightActionsFinished && game.mafiaDidNightAction;
+            if (allTownNightActionsFinished) {
                 game.timeToNightActionResolution -= dt;
-                console.log(game.timeToNightActionResolution);
+                console.log('Time to day:', game.timeToNightActionResolution);
             } else {
                 game.timeToNightActionResolution = config.nightActionBufferTime * (1 + Math.random()/2);
             }
