@@ -1,0 +1,115 @@
+[
+  {
+    "name": "simple5",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Mafia", "role": "vanilla"}
+    ]
+  },
+  {
+    "name": "power5",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "cop"},
+      {"faction": "Mafia", "role": "roleblocker"}
+    ]
+  },
+  {
+    "name": "whyareyouplayingwith6",
+    "roles": [
+      {"faction": "Town", "role": "vigilante"},
+      {"faction": "Town", "role": "vigilante"},
+      {"faction": "Town", "role": "vigilante"},
+      {"faction": "Town", "role": "vigilante"},
+      {"faction": "Town", "role": "vigilante"},
+      {"faction": "Mafia", "role": "pgo"}
+    ]
+  },
+  {
+    "name": "standard7",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "cop"},
+      {"faction": "Town", "role": "doctor"},
+      {"faction": "Mafia", "role": "vanilla"},
+      {"faction": "Mafia", "role": "vanilla"}
+    ]
+  },
+  {
+    "name": "power7",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "roleblocker"},
+      {"faction": "Town", "role": "cop"},
+      {"faction": "Town", "role": "doctor"},
+      {"faction": "Mafia", "role": "vanilla"},
+      {"faction": "Mafia", "role": "roleblocker"}
+    ]
+  },
+  {
+    "name": "standard8",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "cop"},
+      {"faction": "Town", "role": "doctor"},
+      {"faction": "Mafia", "role": "vanilla"},
+      {"faction": "Mafia", "role": "roleblocker"}
+    ]
+  },
+  {
+    "name": "standard9",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "insanecop"},
+      {"faction": "Town", "role": "cop"},
+      {"faction": "Mafia", "role": "vanilla"},
+      {"faction": "Mafia", "role": "roleblocker"}
+    ]
+  },
+  {
+    "name": "standard10",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vigilante"},
+      {"faction": "Town", "role": "cop"},
+      {"faction": "Town", "role": "doctor"},
+      {"faction": "Mafia", "role": "vanilla"},
+      {"faction": "Mafia", "role": "vanilla"},
+      {"faction": "Mafia", "role": "vanilla"}
+    ]
+  },
+  {
+    "name": "standard11",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vigilante"},
+      {"faction": "Town", "role": "cop"},
+      {"faction": "Town", "role": "doctor"},
+      {"faction": "Mafia", "role": "vanilla"},
+      {"faction": "Mafia", "role": "roleblocker"},
+      {"faction": "Mafia", "role": "vanilla"}
+    ]
+  }
+]

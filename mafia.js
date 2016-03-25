@@ -44,6 +44,12 @@ var timeLastSentSyncMessage = new Date();
 var getRole = (roleId) => {
     return _.find(roles, {id: roleId});
 }
+var getRolesets = () => {
+    return JSON.parse(fs.readFileSync(config.rolesetJSONPath).toString());
+}
+var saveRoleSets = (rolesets) => {
+    fs.writeFile(config.rolesetJSONPath, JSON.stringify(rolesets));
+}
 var fireEvent = (event, params) => {
     return event == null ? null : event(_.assignIn({mafiabot: mafiabot, data: data}, params));
 }
@@ -66,13 +72,6 @@ var adminCheck = message => {
 };
 var activatedCheck = message => {
     return data.channelsActivated.indexOf(message.channel.id) >= 0;
-}
-var listUsers = listOfUserIds => {
-    var output = '';
-    for (var i = 0; i < listOfUserIds.length; i++) {
-        output += `\n${i + 1}. <@${listOfUserIds[i]}>`;
-    }
-    return output;
 }
 var majorityOf = listOfPlayers => {
     return Math.ceil(listOfPlayers.length / 2 + 0.1);
@@ -151,6 +150,32 @@ var checkForGameOver = channelId => {
 }
 
 // printing
+var listRoles = roles => {
+    var output = '';
+    var sortedRoles = _.sortBy(roles, 'name');
+    for (var i = 0; i < sortedRoles.length; i++) {
+        var role = sortedRoles[i];
+        output += `\n***${role.id}*** | **${role.name}** | ${role.description}`;
+    }
+    return output;
+}
+var listRolesets = rolesets => {
+    var output = '';
+    var sortedRolesets = _.sortBy(rolesets, set => set.roles.length);
+    for (var i = 0; i < sortedRolesets.length; i++) {
+        var roleset = sortedRolesets[i];
+        var formattedRoles = _.map(roleset.roles, role => `\`${role.faction} ${getRole(role.role).name}\``).join(', ');
+        output += `\n***${roleset.name}* (${roleset.roles.length})** | ${formattedRoles}`;
+    }
+    return output;
+}
+var listUsers = listOfUserIds => {
+    var output = '';
+    for (var i = 0; i < listOfUserIds.length; i++) {
+        output += `\n${i + 1}. <@${listOfUserIds[i]}>`;
+    }
+    return output;
+}
 var printCurrentPlayers = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
@@ -249,6 +274,68 @@ var baseCommands = [
         },
     },
     {
+        commands: ['activatemafia'],
+        description: 'Activate MafiaBot on this channel',
+        adminOnly: true,
+        activatedOnly: false,
+        onMessage: message => {
+            if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
+                mafiabot.reply(message, `MafiaBot is already activated in *<#${message.channel.id}>*! Use *${pre}deactivatemafia* to deactivate MafiaBot on this channel.`);
+            } else {
+                data.channelsActivated.push(message.channel.id);
+                mafiabot.reply(message, `MafiaBot has been activated in *<#${message.channel.id}>*! Use *${pre}creategame* to start playing some mafia!`);
+            }
+        },
+    },
+    {
+        commands: ['deactivatemafia'],
+        description: 'Deactivate MafiaBot on this channel',
+        adminOnly: true,
+        activatedOnly: false,
+        onMessage: message => {
+            if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
+                data.channelsActivated.splice(data.channelsActivated.indexOf(message.channel.id), 1);
+                mafiabot.reply(message, `MafiaBot has been deactivated in *<#${message.channel.id}>*!`);
+            } else {
+                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *${pre}activatemafia* to activate MafiaBot on this channel.`);
+            }
+        },
+    },
+    {
+        commands: ['roles'],
+        description: 'Show all available roles',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            mafiabot.reply(message, `Here the list of available roles:${listRoles(roles)}`);
+        },
+    },
+    {
+        commands: ['rolesets'],
+        description: 'Show all available role sets',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            mafiabot.reply(message, `Here the list of available rolesets:${listRolesets(getRolesets())}`);
+        },
+    },
+    // {
+    //     commands: ['addroleset'],
+    //     description: 'Add a role set using a specific format: ',
+    //     adminOnly: false,
+    //     activatedOnly: true,
+    //     onMessage: message => {
+    //     },
+    // },
+    // {
+    //     commands: ['deleteroleset'],
+    //     description: 'Delete a roleset',
+    //     adminOnly: true,
+    //     activatedOnly: true,
+    //     onMessage: message => {
+    //     },
+    // },
+    {
         commands: ['admin', 'admins'],
         description: 'Show list of admins for MafiaBot',
         adminOnly: false,
@@ -301,34 +388,6 @@ var baseCommands = [
         onMessage: message => {
             if (!printCurrentVotes(message.channel.id)) {
                 mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
-            }
-        },
-    },
-    {
-        commands: ['activatemafia'],
-        description: 'Activate MafiaBot on this channel',
-        adminOnly: true,
-        activatedOnly: false,
-        onMessage: message => {
-            if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
-                mafiabot.reply(message, `MafiaBot is already activated in *<#${message.channel.id}>*! Use *${pre}deactivatemafia* to deactivate MafiaBot on this channel.`);
-            } else {
-                data.channelsActivated.push(message.channel.id);
-                mafiabot.reply(message, `MafiaBot has been activated in *<#${message.channel.id}>*! Use *${pre}creategame* to start playing some mafia!`);
-            }
-        },
-    },
-    {
-        commands: ['deactivatemafia'],
-        description: 'Deactivate MafiaBot on this channel',
-        adminOnly: true,
-        activatedOnly: false,
-        onMessage: message => {
-            if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
-                data.channelsActivated.splice(data.channelsActivated.indexOf(message.channel.id), 1);
-                mafiabot.reply(message, `MafiaBot has been deactivated in *<#${message.channel.id}>*!`);
-            } else {
-                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *${pre}activatemafia* to activate MafiaBot on this channel.`);
             }
         },
     },
