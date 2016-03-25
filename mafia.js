@@ -470,22 +470,30 @@ var baseCommands = [
             if (gameInChannel) {
                 if (gameInChannel.hostId == message.author.id) {
                     if (gameInChannel.state == STATE.INIT) {
-                        if (gameInChannel.players.length >= config.minimumPlayers) {
+                        // see if there are any available rolesets for this number of players
+                        var possibleRolesets = _.filter(getRolesets(), set => set.roles.length == gameInChannel.players.length);
+                        if (possibleRolesets.length) {
                             mafiabot.createChannel(message.channel, 'mafia' + Math.random().toString().substring(2), 'text', (error, mafiaChannel) => {
                                 if (mafiaChannel) {
                                     gameInChannel.state = STATE.CONFIRMING;
                                     gameInChannel.mafiaChannelId = mafiaChannel.id;
                                     mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **${pre}confirm** in this channel to confirm your role.`);
                                     printCurrentPlayers(message.channel.id);
+
+                                    // pick a random available roleset and randomly assign the roles
+                                    var roleset = possibleRolesets[Math.floor(Math.random()*possibleRolesets.length)];
+                                    console.log('Picking roleset:', roleset.name);
+                                    var shuffledRoles = _.shuffle(roleset.roles);
                                     for (var i = 0; i < gameInChannel.players.length; i++) {
                                         var player = gameInChannel.players[i];
-                                        player.faction = ['Town', 'Mafia'][Math.floor(Math.random() * 2)];
-                                        player.role = roles[Math.floor(Math.random() * roles.length)].id;
-                                        mafiabot.sendMessage(_.find(mafiabot.users, {id: player.id}), `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                                        player.faction = shuffledRoles[i].faction;
+                                        player.role = shuffledRoles[i].role;
+                                        console.log('    ', player.name, player.faction, player.role);
+                                        mafiabot.sendMessage(player.id, `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                                     }
 
                                     var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
-                                    var mafiaPlayers = gameInChannel.players;//_.filter(gameInChannel.players, {faction: 'Mafia'});
+                                    var mafiaPlayers = _.filter(gameInChannel.players, {faction: 'Mafia'});
                                     mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false });
                                     for (var i = 0; i < mafiaPlayers.length; i++) {
                                         var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
@@ -497,7 +505,7 @@ var baseCommands = [
                                 }
                             });
                         } else {
-                            mafiabot.reply(message, `You need a minimum of ${s(config.minimumPlayers, 'player')} to start a game!`);
+                            mafiabot.reply(message, `Sorry, there are no available rolesets for ${s(gameInChannel.players.length, 'player')}! Use the **${pre}addroleset** command to add a new roleset for this number of players.`);
                         }
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
