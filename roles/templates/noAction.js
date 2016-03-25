@@ -16,7 +16,7 @@ module.exports = (ext) => {
             }
             if (p.args[0] == 'noaction') {
                 p.player.roleData.noAction = true;
-                p.mafiabot.reply(p.message, `You are taking no action tonight.`);
+                p.mafiabot.reply(p.message, `**You are taking no action tonight.**`);
             }
         },
     };

@@ -9,6 +9,7 @@ var self = templates.extend(templates.singleTarget, {
     commandGerund: 'saving',
     commandText: 'protect a target from dying tonight',
     actionText: 'doctor save',
+    canSelfTarget: false,
     onActionPhase: (p) => {
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {

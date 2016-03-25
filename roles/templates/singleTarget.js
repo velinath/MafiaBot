@@ -21,14 +21,18 @@ module.exports = (ext) => {
                 if (canDoActionResult === true) {
                     var target = closestPlayer(p.args[1], p.game.players);
                     if (target && target.alive) {
-                        p.game.nightActions = _.reject(p.game.nightActions, {action: ext.actionText, playerId: p.player.id});
-                        p.game.nightActions.push({ 
-                            action: ext.actionText,
-                            playerId: p.player.id,
-                            targetId: target.id,
-                        });
-                        p.player.roleData.didAction = true;
-                        p.mafiabot.reply(p.message, `You are ${ext.commandGerund} **<@${target.id}>** tonight! Type ***${pre}cancel*** to cancel.`);
+                        if (target.id != p.player.id || ext.canSelfTarget || ext.canSelfTarget == null) {
+                            p.game.nightActions = _.reject(p.game.nightActions, {action: ext.actionText, playerId: p.player.id});
+                            p.game.nightActions.push({ 
+                                action: ext.actionText,
+                                playerId: p.player.id,
+                                targetId: target.id,
+                            });
+                            p.player.roleData.didAction = true;
+                            p.mafiabot.reply(p.message, `**You are ${ext.commandGerund} <@${target.id}> tonight!** Type ***${pre}cancel*** to cancel.`);
+                        } else {
+                            p.mafiabot.reply(p.message, `As a ${ext.name}, you cannot target yourself at night!`);
+                        }
                     } else {
                         p.mafiabot.reply(p.message, `*${p.args[1]}* is not a valid target!`);
                     }
@@ -39,13 +43,13 @@ module.exports = (ext) => {
                 var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
                 if (action) {
                     p.player.roleData.didAction = false;
-                    p.mafiabot.reply(p.message, `You have canceled ${ext.commandGerund} **<@${action.targetId}>**.`);
+                    p.mafiabot.reply(p.message, `**You have canceled ${ext.commandGerund} <@${action.targetId}>.**`);
                 }
                 p.game.nightActions = _.reject(p.game.nightActions, {action: ext.actionText, playerId: p.player.id});
             }
             if (p.args[0] == 'noaction') {
                 p.player.roleData.noAction = true;
-                p.mafiabot.reply(p.message, `You are taking no action tonight.`);
+                p.mafiabot.reply(p.message, `**You are taking no action tonight.**`);
             }
         },
     };

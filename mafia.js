@@ -689,7 +689,7 @@ mafiabot.on("message", message => {
                         targetId: target.id,
                     });
                     game.mafiaDidNightAction = true;
-                    mafiabot.reply(message, `You are killing **<@${target.id}>** tonight! Type ***${pre}cancel*** to cancel.`);
+                    mafiabot.reply(message, `**You are killing <@${target.id}> tonight!** Type ***${pre}cancel*** to cancel.`);
                 } else {
                     mafiabot.reply(message, `*${args[1]}* is not a valid target!`);
                 }
@@ -697,13 +697,13 @@ mafiabot.on("message", message => {
                 var action = _.find(game.nightActions, {action: actionText});
                 if (action) {
                     game.mafiaDidNightAction = false;
-                    mafiabot.reply(message, `You have canceled killing **<@${action.targetId}>**.`);
+                    mafiabot.reply(message, `**You have canceled killing <@${action.targetId}>.**`);
                 }
                 game.nightActions = _.reject(game.nightActions, {action: actionText});
             }
             if (args[0] == 'noaction') {
                 game.mafiaDidNightAction = true;
-                mafiabot.reply(message, `You are taking no action tonight.`);
+                mafiabot.reply(message, `**You are taking no action tonight.**`);
             }
         }
     }
