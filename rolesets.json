@@ -1,5 +1,11 @@
 [
   {
+    "name": "testingpurposesonly!",
+    "roles": [
+      {"faction": "Town", "role": "vanilla"}
+    ]
+  },
+  {
     "name": "simple5",
     "roles": [
       {"faction": "Town", "role": "vanilla"},
@@ -72,11 +78,11 @@
     "roles": [
       {"faction": "Town", "role": "vanilla"},
       {"faction": "Town", "role": "vanilla"},
-      {"faction": "Town", "role": "vanilla"},
-      {"faction": "Town", "role": "vanilla"},
-      {"faction": "Town", "role": "vanilla"},
+      {"faction": "Town", "role": "vigilante"},
+      {"faction": "Town", "role": "doctor"},
       {"faction": "Town", "role": "insanecop"},
       {"faction": "Town", "role": "cop"},
+      {"faction": "Town", "role": "vanilla"},
       {"faction": "Mafia", "role": "vanilla"},
       {"faction": "Mafia", "role": "roleblocker"}
     ]
