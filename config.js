@@ -17,6 +17,6 @@ module.exports = _.merge({
     mainLoopInterval: 250,
     syncMessageTimeout: 2000,
 
-    nightActionReminderInterval: 20*1000,
+    nightActionReminderInterval: 60*1000,
     nightActionBufferTime: 20*1000,
 }, overrides);
