@@ -111,7 +111,9 @@ var checkForLynch = channelId => {
 `It is now night ${gameInChannel.day}! Use the ***${pre}kill*** command in this chat to choose who the mafia will kill tonight (ex: *${pre}kill fool*). ***${pre}cancel*** to cancel.
 Use the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.
 
-**IMPORTANT: The person who sends the kill command in this chat will be the one to perform the kill, for role purposes.**
+***IMPORTANT: DO NOT ping a non-mafia player with @ in this chat. They will get a notification even though they can't read this chat.***
+
+**NOTE: The person who sends the kill command in this chat will be the one to perform the kill, for role purposes.**
 **ALSO: If you have a power role, you must send me a private message separate from this chat to make that action!**`
                     );
                     printCurrentPlayers(channelId, gameInChannel.mafiaChannelId);
@@ -215,7 +217,7 @@ var sendPlayerRoleInfo = player => {
 var printCurrentPlayers = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
-        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by <@${gameInChannel.hostId}>:`;
+        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by \`${_.find(gameInChannel.players, {id: gameInChannel.hostId}).name}\`:`;
         for (var i = 0; i < gameInChannel.players.length; i++) {
             var player = gameInChannel.players[i];
             output += `\n${i + 1}) `;
@@ -892,7 +894,8 @@ mafiabot.on("message", message => {
                         targetId: target.id,
                     });
                     game.mafiaDidNightAction = true;
-                    mafiabot.reply(message, `**You are killing <@${target.id}> tonight!** Type ***${pre}cancel*** to cancel.`);
+                    // make sure not to ping non-mafia players in the mafia chat
+                    mafiabot.reply(message, `**You are killing *${_.find(game.players, {id: target.id}).name}* tonight!** Type ***${pre}cancel*** to cancel.`);
                 } else {
                     mafiabot.reply(message, `*${args[1]}* is not a valid target!`);
                 }
@@ -900,7 +903,7 @@ mafiabot.on("message", message => {
                 var action = _.find(game.nightActions, {action: actionText});
                 if (action) {
                     game.mafiaDidNightAction = false;
-                    mafiabot.reply(message, `**You have canceled killing <@${action.targetId}>.**`);
+                    mafiabot.reply(message, `**You have canceled killing *${_.find(game.players, {id: action.targetId}).name}*.**`);
                 }
                 game.nightActions = _.reject(game.nightActions, {action: actionText});
             }
