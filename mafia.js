@@ -209,6 +209,9 @@ var listUsers = listOfUserIds => {
     }
     return output;
 }
+var sendPlayerRoleInfo = player => {
+    mafiabot.sendMessage(player.id, `Your role is ***${getFaction(player.faction).name} ${getRole(player.role).name}***.\n${getRole(player.role).description}\n${getFaction(player.faction).description}`);
+}
 var printCurrentPlayers = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
@@ -466,6 +469,23 @@ var baseCommands = [
         },
     },
     {
+        commands: ['myrole'],
+        description: 'Sends you a PM of your role info again',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
+            if (gameInChannel) {
+                var player = _.find(gameInChannel.players, {id: message.author.id});
+                if (player) {
+                    sendPlayerRoleInfo(player);
+                }
+            } else {
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
+            }
+        },
+    },
+    {
         commands: ['day', 'info'],
         description: 'Show current day information',
         adminOnly: false,
@@ -590,7 +610,8 @@ var baseCommands = [
                                         player.faction = shuffledRoles[i].faction;
                                         player.role = shuffledRoles[i].role;
                                         console.log('    ', player.name, player.faction, player.role);
-                                        mafiabot.sendMessage(player.id, `Your role is ***${getFaction(player.faction).name} ${getRole(player.role).name}***.\n${getRole(player.role).description}\n${getFaction(player.faction).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                                        sendPlayerRoleInfo(player);
+                                        mafiabot.sendMessage(player.id, `Type **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                                     }
 
                                     var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
