@@ -128,25 +128,40 @@ var checkForGameOver = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var livePlayers = _.filter(gameInChannel.players, 'alive');
-        var liveTown = _.filter(livePlayers, {faction: 'town'});
-        var liveMafia = _.filter(livePlayers, {faction: 'mafia'});
-        if (liveTown.length && liveMafia.length) {
-            return false;
-        } else {
+        var winningFactions = {};
+        for (var i = 0; i < gameInChannel.players.length; i++) {
+            var player = gameInChannel.players[i];
+            var result = fireEvent(getFaction(player.faction).isVictory, {game: gameInChannel, player: player});
+            if (result) {
+                winningFactions[player.faction] = player.faction;
+            }
+        }
+        winningFactions = _.toArray(winningFactions);
+
+        const gameOver = gameOverMessage => {
             gameInChannel.state = STATE.GAMEOVER;
             for (var i = 0; i < livePlayers.length; i++) {
                 livePlayers[i].alive = false;
                 livePlayers[i].deathReason = 'Survivor!';
             }
-            if (liveTown.length && !liveMafia.length) {
-                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THE TOWN HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: 'town'}), 'id'))}`);
-            } else if (liveMafia.length && !liveTown.length) {
-                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THE MAFIA TEAM HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: 'mafia'}), 'id'))}`);
-            } else if (!liveTown.length && !liveMafia.length) {
-                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THERE WAS... A TIE?!**`);
-            }
+            mafiabot.syncMessage(channelId, gameOverMessage);
             printCurrentPlayers(channelId);
-            mafiabot.syncMessage(channelId, `Use the ***${pre}endgame*** command to end the game (and delete the mafia chat forever) so you can start a new game!`);
+            
+            var mafiaChannel = _.find(mafiabot.channels, {id: gameInChannel.mafiaChannelId});
+            var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
+            mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: true, sendMessages: true });
+            mafiabot.syncMessage(channelId, `Mafia chat is now open to all players.\nUse the ***${pre}endgame*** command to end the game (and delete the mafia chat forever) so you can start a new game!`);
+        };
+
+        if (winningFactions.length == 1) {
+            var faction = getFaction(winningFactions[0]);
+            gameOver(`***GAME OVER!***\n**THE ${faction.name.toUpperCase()} TEAM HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: faction.id}), 'id'))}`);
+            return true;
+        } else if (winningFactions.length > 1) {
+            gameOver(`***GAME OVER!***\n**THERE WAS... A TIE?!** Winning factions: ${winningFactions.map(faction => getFaction(faction).name).join(', ')}`);
+            return true;
+        } else if (winningFactions.length == 0 && livePlayers.length == 0) {
+            gameOver(`***GAME OVER!***\n**NOBODY WINS!!!!... somehow?**`);
             return true;
         }
     }
