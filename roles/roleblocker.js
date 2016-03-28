@@ -12,8 +12,12 @@ var self = templates.extend(templates.singleTarget, {
     onBlockingPhase: (p) => {
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
+            var previousNightActionCount = p.game.nightActions.length;
             p.game.nightActions = _.reject(p.game.nightActions, {playerId: action.targetId});
-            p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: action.targetId}), `**You have been roleblocked!**`);
+            // only send roleblock message when an action was blocked
+            if (p.game.nightActions.length !== previousNightActionCount) {
+                p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: action.targetId}), `**You have been roleblocked!**`);                
+            }
         }
     },
 });
