@@ -290,12 +290,18 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: false,
         onMessage: message => {
+            const commandsPerMessage = 15;
             var output = `\nType one of the following commands to interact with MafiaBot:`;
             for (var i = 0; i < baseCommands.length; i++) {
                 var comm = baseCommands[i];
                 output += `\n**${pre}${comm.commands.join('/')}** - ${comm.description}${comm.adminOnly ? ' - *Admin Only*' : ''}${comm.activatedOnly ? ' - *Activated Channel Only*' : ''}`;
+                if (i % commandsPerMessage === commandsPerMessage - 1 && i !== baseCommands.length - 1) {
+                    output += `\n*(cont)*`;
+                    mafiabot.syncMessage(message.channel.id, output);
+                    output = ``;
+                }
             }
-            mafiabot.reply(message, output);
+            mafiabot.syncMessage(message.channel.id, output);
         },
     },
     {
