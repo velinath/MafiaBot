@@ -87,7 +87,7 @@ var checkForLynch = channelId => {
         var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
         for (var targetId in votesByTarget) {
             if (votesByTarget[targetId].length >= votesRequired) {
-                mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**!! *NO TALKING AT NIGHT* !!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n`);
+                mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n\n**!! *THERE IS NO TALKING AT NIGHT* !!**\n\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n\n`);
                 if (targetId == 'NO LYNCH') {
                     mafiabot.syncMessage(channelId, `No one was lynched.`, 1000);
                 } else {
@@ -117,6 +117,11 @@ Use the ***${pre}noaction*** command to confirm that you are active but taking n
                     printCurrentPlayers(channelId, gameInChannel.mafiaChannelId);
                     
                     printDayState(channelId);
+
+                    // block night talking
+                    var gameChannel = _.find(mafiabot.channels, {id: channelId});
+                    var everyoneId = _.find(gameChannel.server.roles, {name: "@everyone"}).id;
+                    mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: false });
                 }
                 return true;
             }
@@ -523,6 +528,11 @@ var baseCommands = [
                 _.remove(data.games, gameInChannel);
                 mafiabot.deleteChannel(gameInChannel.mafiaChannelId);
                 mafiabot.sendMessage(message.channel, `${becauseOf} ended game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>! 😥`);
+
+                // enable talking just in case it was off
+                var gameChannel = _.find(mafiabot.channels, {id: gameInChannel.channelId});
+                var everyoneId = _.find(gameChannel.server.roles, {name: "@everyone"}).id;
+                mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: true });
             };
             if (gameInChannel) {
                 if (gameInChannel.hostId == message.author.id) {
@@ -958,6 +968,9 @@ var mainLoop = function() {
                     }
                 }
                 // start day
+                var gameChannel = _.find(mafiabot.channels, {id: game.channelId});
+                var everyoneId = _.find(gameChannel.server.roles, {name: "@everyone"}).id;
+                mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: true });
                 game.state = STATE.DAY;
                 game.day++;
                 game.votes.length = 0;
