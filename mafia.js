@@ -580,7 +580,7 @@ var baseCommands = [
                                         player.faction = shuffledRoles[i].faction;
                                         player.role = shuffledRoles[i].role;
                                         console.log('    ', player.name, player.faction, player.role);
-                                        mafiabot.sendMessage(player.id, `Your role is ***${getFaction(player.faction).name} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                                        mafiabot.sendMessage(player.id, `Your role is ***${getFaction(player.faction).name} ${getRole(player.role).name}***.\n${getRole(player.role).description}\n${getFaction(player.faction).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                                     }
 
                                     var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;

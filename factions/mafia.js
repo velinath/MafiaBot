@@ -3,7 +3,7 @@ const _ = require('lodash');
 var self = {
     id: 'mafia',
     name: 'Mafia',
-    description: `You win when you control half or more of the town, and all other scum teams (3rd party, Serial Killer, etc.) are dead. You share a chat with your fellow mafia team members.`,
+    description: `You win when your team controls half or more of the remaining town, and all other scum teams (3rd party, Serial Killer, etc.) are dead. You share a chat with your fellow mafia team members.`,
     isVictory: (p) => {
         // no 3rd party alive
         var livePlayers = _.filter(p.game.players, 'alive');
