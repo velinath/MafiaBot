@@ -10,6 +10,7 @@ const store = require('node-persist');
 const Discord = require('discord.js');
 
 const roles = require('./roles');
+const factions = require('./factions');
 const STATE = require('./gameStates.js');
 
 const s = require('./pluralize.js');
@@ -44,11 +45,14 @@ var timeLastSentSyncMessage = new Date();
 var getRole = (roleId) => {
     return _.find(roles, {id: roleId});
 }
+var getFaction = (factionId) => {
+    return _.find(factions, {id: factionId});
+}
 var getRolesets = () => {
     return JSON.parse(fs.readFileSync(config.rolesetJSONPath).toString());
 }
 var saveRoleSets = (rolesets) => {
-    fs.writeFile(config.rolesetJSONPath, JSON.stringify(rolesets));
+    fs.writeFile(config.rolesetJSONPath, JSON.stringify(rolesets, null, '\t'));
 }
 var fireEvent = (event, params) => {
     return event == null ? null : event(_.assignIn({mafiabot: mafiabot, data: data}, params));
@@ -88,7 +92,7 @@ var checkForLynch = channelId => {
                     mafiabot.syncMessage(channelId, `No one was lynched.`, 1000);
                 } else {
                     var lynchedPlayer = _.find(gameInChannel.players, {id: targetId});
-                    mafiabot.syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${lynchedPlayer.faction} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
+                    mafiabot.syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${getFaction(lynchedPlayer.faction).name} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
                     lynchedPlayer.alive = false;
                     lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
                 }
@@ -124,8 +128,8 @@ var checkForGameOver = channelId => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var livePlayers = _.filter(gameInChannel.players, 'alive');
-        var liveTown = _.filter(livePlayers, {faction: 'Town'});
-        var liveMafia = _.filter(livePlayers, {faction: 'Mafia'});
+        var liveTown = _.filter(livePlayers, {faction: 'town'});
+        var liveMafia = _.filter(livePlayers, {faction: 'mafia'});
         if (liveTown.length && liveMafia.length) {
             return false;
         } else {
@@ -135,9 +139,9 @@ var checkForGameOver = channelId => {
                 livePlayers[i].deathReason = 'Survivor!';
             }
             if (liveTown.length && !liveMafia.length) {
-                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THE TOWN HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: 'Town'}), 'id'))}`);
+                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THE TOWN HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: 'town'}), 'id'))}`);
             } else if (liveMafia.length && !liveTown.length) {
-                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THE MAFIA TEAM HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: 'Mafia'}), 'id'))}`);
+                mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THE MAFIA TEAM HAS WON!!!**\nCongrats:${listUsers(_.map(_.filter(gameInChannel.players, {faction: 'mafia'}), 'id'))}`);
             } else if (!liveTown.length && !liveMafia.length) {
                 mafiabot.syncMessage(channelId, `***GAME OVER!***\n**THERE WAS... A TIE?!**`);
             }
@@ -150,9 +154,18 @@ var checkForGameOver = channelId => {
 }
 
 // printing
+var listFactions = factions => {
+    var output = '';
+    var sortedFactions = _.sortBy(factions, 'id');
+    for (var i = 0; i < sortedFactions.length; i++) {
+        var faction = sortedFactions[i];
+        output += `\n***${faction.id}*** | **${faction.name}** | ${faction.description}`;
+    }
+    return output;
+}
 var listRoles = roles => {
     var output = '';
-    var sortedRoles = _.sortBy(roles, 'name');
+    var sortedRoles = _.sortBy(roles, 'id');
     for (var i = 0; i < sortedRoles.length; i++) {
         var role = sortedRoles[i];
         output += `\n***${role.id}*** | **${role.name}** | ${role.description}`;
@@ -164,7 +177,7 @@ var listRolesets = rolesets => {
     var sortedRolesets = _.sortBy(rolesets, set => set.roles.length);
     for (var i = 0; i < sortedRolesets.length; i++) {
         var roleset = sortedRolesets[i];
-        var formattedRoles = _.map(roleset.roles, role => `\`${role.faction} ${getRole(role.role).name}\``).join(', ');
+        var formattedRoles = _.map(roleset.roles, role => `\`${getFaction(role.faction).name} ${getRole(role.role).name}\``).join(', ');
         output += `\n***${roleset.name}* (${roleset.roles.length})** | ${formattedRoles}`;
     }
     return output;
@@ -186,7 +199,7 @@ var printCurrentPlayers = (channelId, outputChannelId) => {
             if (player.alive) {
                 output += `\`${player.name}\``;
             } else {
-                output += `~~\`${player.name}\`~~ - ${player.faction} ${getRole(player.role).name} - *${player.deathReason}*`;
+                output += `~~\`${player.name}\`~~ - ${getFaction(player.faction).name} ${getRole(player.role).name} - *${player.deathReason}*`;
             }
         }
         mafiabot.syncMessage(outputChannelId || channelId, output);
@@ -302,6 +315,15 @@ var baseCommands = [
         },
     },
     {
+        commands: ['factions'],
+        description: 'Show all available factions',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            mafiabot.reply(message, `Here the list of available factions:${listFactions(factions)}`);
+        },
+    },
+    {
         commands: ['roles'],
         description: 'Show all available roles',
         adminOnly: false,
@@ -313,28 +335,82 @@ var baseCommands = [
     {
         commands: ['rolesets'],
         description: 'Show all available role sets',
-        adminOnly: false,
+        adminOnly: true,
         activatedOnly: true,
         onMessage: message => {
             mafiabot.reply(message, `Here the list of available rolesets:${listRolesets(getRolesets())}`);
         },
     },
-    // {
-    //     commands: ['addroleset'],
-    //     description: 'Add a role set using a specific format: ',
-    //     adminOnly: false,
-    //     activatedOnly: true,
-    //     onMessage: message => {
-    //     },
-    // },
-    // {
-    //     commands: ['deleteroleset'],
-    //     description: 'Delete a roleset',
-    //     adminOnly: true,
-    //     activatedOnly: true,
-    //     onMessage: message => {
-    //     },
-    // },
+    {
+        commands: ['addroleset'],
+        description: 'Add a roleset to the random rotation',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: (message, args) => {
+            const formatError = `That's the incorrect format!. To add a roleset, use the following format:\n\`${pre}addroleset [roleset id] | [faction1] [role1], [faction2] [role2], etc...\`\nex: *${pre}addroleset coolrolesetup | town vanilla, town insanecop, mafia roleblocker, independent serialkiller*`;
+
+            var name = args[1];
+            var rolelistText = message.content.split('|')[1];
+            if (typeof(name) === 'string' && typeof(rolelistText) === 'string') {
+                var rolesets = getRolesets();
+                if (!_.find(rolesets, {name: name})) {
+                    var rolelist = rolelistText.split(',').map(item => item.trim().split(' '));
+                    var error = null;
+                    if (!_.every(rolelist, role => role.length == 2)) {
+                        error = formatError;
+                    } else if (!_.every(rolelist, role => _.find(factions, {id: role[0]}))) {
+                        var badFaction = _.find(rolelist, role => !_.find(factions, {id: role[0]}))[0];
+                        error = `The faction *${badFaction}* is not a valid faction ID. Make sure to use the ID and not the full name. Use *${pre}factions* to see the list of available factions.`;
+                    } else if (!_.every(rolelist, role => _.find(roles, {id: role[1]}))) {
+                        var badRole = _.find(rolelist, role => !_.find(roles, {id: role[1]}))[1];
+                        error = `The role *${badRole}* is not a valid role ID. Make sure to use the ID and not the full name. Use *${pre}roles* to see the list of available roles.`;
+                    }
+                    if (!error) {
+                        const rolesetHasher = rs => rs.reduce((acc, item) => {
+                            var str = item.faction + item.role; 
+                            acc[str] = (acc[str] || 0) + 1; 
+                            return acc;
+                        }, {});
+                        var newRoleset = {name: name, roles: rolelist.map(item => ({faction: item[0], role: item[1]}))};
+                        var newRolesetHash = rolesetHasher(newRoleset.roles);
+                        var existingRoleset = _.find(rolesets, roleset => _.isEqual(newRolesetHash, rolesetHasher(roleset.roles)));
+                        if (!existingRoleset) {
+                            rolesets.push(newRoleset);
+                            rolesets = _.sortBy(rolesets, rs => rs.roles.length);
+                            saveRoleSets(rolesets);
+                            mafiabot.reply(message, `Added new roleset named *${newRoleset.name}*!`);
+                        } else {
+                            mafiabot.reply(message, `There already exists a roleset with that set of roles, with the name *${existingRoleset.name}*!`);
+                        }
+                    } else {
+                        mafiabot.reply(message, error);
+                    }
+                } else {
+                    mafiabot.reply(message, `There already exists a roleset named *${name}*! Use ${pre}deleteroleset to delete it and then re-add it.`);
+                }
+            } else {
+                mafiabot.reply(message, formatError);
+            }
+        },
+    },
+    {
+        commands: ['deleteroleset'],
+        description: 'Delete a roleset',
+        adminOnly: true,
+        activatedOnly: true,
+        onMessage: (message, args) => {
+            var name = args[1];
+            var rolesets = getRolesets();
+            var existingRoleset = _.find(rolesets, {name: name});
+            if (existingRoleset) {
+                _.pull(rolesets, existingRoleset);
+                saveRoleSets(rolesets);
+                mafiabot.reply(message, `Deleted roleset named *${existingRoleset.name}*!`);
+            } else {
+                mafiabot.reply(message, `There is no roleset with the name *${name}*! Use ${pre}rolesets command to see the list of available rolesets.`);
+            }
+        },
+    },
     {
         commands: ['admin', 'admins'],
         description: 'Show list of admins for MafiaBot',
@@ -489,11 +565,11 @@ var baseCommands = [
                                         player.faction = shuffledRoles[i].faction;
                                         player.role = shuffledRoles[i].role;
                                         console.log('    ', player.name, player.faction, player.role);
-                                        mafiabot.sendMessage(player.id, `Your role is ***${player.faction} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                                        mafiabot.sendMessage(player.id, `Your role is ***${getFaction(player.faction).name} ${getRole(player.role).name}***.\n${getRole(player.role).description}\nType **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                                     }
 
                                     var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
-                                    var mafiaPlayers = _.filter(gameInChannel.players, {faction: 'Mafia'});
+                                    var mafiaPlayers = _.filter(gameInChannel.players, {faction: 'mafia'});
                                     mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false });
                                     for (var i = 0; i < mafiaPlayers.length; i++) {
                                         var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
@@ -818,7 +894,7 @@ var mainLoop = function() {
 
         if (game.state == STATE.NIGHT) {
             var livePlayers = _.filter(game.players, 'alive');
-            var liveTownPlayers = _.filter(livePlayers, {faction: 'Town'});
+            var liveTownPlayers = _.filter(livePlayers, {faction: 'town'});
 
             // check if all townies and the mafia chat have finished night actions and if so, start the day countdown
             var allTownNightActionsFinished = _.every(liveTownPlayers, (player) => {
@@ -876,7 +952,7 @@ var mainLoop = function() {
                 mafiabot.syncMessage(game.channelId, `***${s(deadPlayers.length, 'player', 's have', ' has')} died.***`, 1000);
                 for (var i = 0; i < deadPlayers.length; i++) {
                     var deadPlayer = deadPlayers[i];
-                    mafiabot.syncMessage(game.channelId, `<@${deadPlayer.id}>, the **${deadPlayer.faction} ${getRole(deadPlayer.role).name}**, has died!`, 1000);
+                    mafiabot.syncMessage(game.channelId, `<@${deadPlayer.id}>, the **${getFaction(deadPlayer.faction).name} ${getRole(deadPlayer.role).name}**, has died!`, 1000);
                 }
                 if (!checkForGameOver(game.channelId)) {
                     mafiabot.syncMessage(game.channelId, `Day ${game.day} is now starting.`, 2000);
@@ -900,7 +976,7 @@ var mainLoop = function() {
                     }
                 }
                 if (!game.mafiaDidNightAction) {
-                    remind('Mafia', game.mafiaChannelId);
+                    remind('mafia', game.mafiaChannelId);
                 }
                 game.nightActionReminderTime = config.nightActionReminderInterval;
             }

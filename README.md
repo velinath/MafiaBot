@@ -23,7 +23,7 @@ $ node mafia.js
 Install [Node Inspector](https://github.com/node-inspector/node-inspector), then
 
 ```sh
-$ node-debug mafia.js
+$ node-debug mafia-debug.js
 ```
 
 ## Shout Out
