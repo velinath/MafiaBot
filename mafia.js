@@ -19,7 +19,7 @@ var getData = () => {
     try { return JSON.parse(fs.readFileSync(config.dataJSONPath).toString()); } catch (e) { return {}; };
 }
 var saveData = (data) => {
-    fs.writeFile(config.dataJSONPath, JSON.stringify(data, null, '\t'));
+    fs.writeFileSync(config.dataJSONPath, JSON.stringify(data, null, '\t'));
 }
 var data = _.merge({
     syncMessages: [],
@@ -55,7 +55,7 @@ var getRolesets = () => {
     try { return JSON.parse(fs.readFileSync(config.rolesetJSONPath).toString()); } catch (e) { return []; };
 }
 var saveRoleSets = (rolesets) => {
-    fs.writeFile(config.rolesetJSONPath, JSON.stringify(rolesets, null, '\t'));
+    fs.writeFileSync(config.rolesetJSONPath, JSON.stringify(rolesets, null, '\t'));
 }
 var fireEvent = (event, params) => {
     return event == null ? null : event(_.assignIn({mafiabot: mafiabot, data: data}, params));
