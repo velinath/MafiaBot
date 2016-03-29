@@ -6,7 +6,6 @@ global.pre = '--'; // command prefix that can be used across all files
 const fs = require('fs');
 const config = require('./config.js');
 const _ = require('lodash');
-const store = require('node-persist');
 const Discord = require('discord.js');
 
 const roles = require('./roles');
@@ -17,14 +16,19 @@ const s = require('./pluralize.js');
 const closestPlayer = require('./closestPlayer.js');
 
 // init stuff
-store.initSync();
+var getData = () => {
+    try { return JSON.parse(fs.readFileSync(config.dataJSONPath).toString()); } catch (e) { return {}; };
+}
+var saveData = (data) => {
+    fs.writeFile(config.dataJSONPath, JSON.stringify(data, null, '\t'));
+}
 var data = _.merge({
     syncMessages: [],
     channelsActivated: [],
     pmChannels: [],
     games: [],
-}, store.getItem('data'));
-store.setItemSync('data', data);
+}, getData());
+saveData(data);
 var mafiabot = new Discord.Client();
 
 // synchronous messages
@@ -49,7 +53,7 @@ var getFaction = (factionId) => {
     return _.find(factions, {id: factionId});
 }
 var getRolesets = () => {
-    return JSON.parse(fs.readFileSync(config.rolesetJSONPath).toString());
+    try { return JSON.parse(fs.readFileSync(config.rolesetJSONPath).toString()); } catch (e) { return []; };
 }
 var saveRoleSets = (rolesets) => {
     fs.writeFile(config.rolesetJSONPath, JSON.stringify(rolesets, null, '\t'));
@@ -925,7 +929,7 @@ mafiabot.on("message", message => {
     }
 
     // save data after every message
-    store.setItemSync('data', data);
+    saveData(data);
 });
 
 // main loop
@@ -1052,7 +1056,7 @@ var mainLoop = function() {
     }
 
     // save and wait for next loop
-    store.setItemSync('data', data);
+    saveData(data);
     setTimeout(mainLoop, Math.max(config.mainLoopInterval - (new Date() - now), 0));
 };
 

@@ -12,6 +12,7 @@ module.exports = _.merge({
         '88020438474567680', // fool
     ],
     feedbackFilePath: 'feedback.txt',
+    dataJSONPath: 'data.json',
     rolesetJSONPath: 'rolesets.json',
 
     mainLoopInterval: 250,

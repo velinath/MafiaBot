@@ -35,3 +35,4 @@ persist/
 *.sublime-project
 *.sublime-workspace
 feedback.txt
+data.json
