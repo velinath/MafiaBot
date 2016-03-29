@@ -152,7 +152,7 @@ var checkForGameOver = channelId => {
                 livePlayers[i].deathReason = 'Survivor!';
             }
             mafiabot.syncMessage(channelId, gameOverMessage);
-            printCurrentPlayers(channelId);
+            printCurrentPlayersWithTrueRole(channelId);
             
             var mafiaChannel = _.find(mafiabot.channels, {id: gameInChannel.mafiaChannelId});
             var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
@@ -190,7 +190,10 @@ var listRoles = roles => {
     var sortedRoles = _.sortBy(roles, 'id');
     for (var i = 0; i < sortedRoles.length; i++) {
         var role = sortedRoles[i];
-        output += `\n***${role.id}*** | **${role.name}** | ${role.description}`;
+        output += `\n***${role.id}*** | **${role.trueName || role.name}** | ${role.description}`;
+        if (role.secretDetails) {
+            output += ` | *${role.secretDetails}*`;
+        }
     }
     return output;
 }
@@ -214,7 +217,7 @@ var listUsers = listOfUserIds => {
 var sendPlayerRoleInfo = player => {
     mafiabot.sendMessage(player.id, `Your role is ***${getFaction(player.faction).name} ${getRole(player.role).name}***.\n${getRole(player.role).description}\n${getFaction(player.faction).description}`);
 }
-var printCurrentPlayers = (channelId, outputChannelId) => {
+var printCurrentPlayers = (channelId, outputChannelId, printTrueRole) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by \`${_.find(gameInChannel.players, {id: gameInChannel.hostId}).name}\`:`;
@@ -224,13 +227,16 @@ var printCurrentPlayers = (channelId, outputChannelId) => {
             if (player.alive) {
                 output += `\`${player.name}\``;
             } else {
-                output += `~~\`${player.name}\`~~ - ${getFaction(player.faction).name} ${getRole(player.role).name} - *${player.deathReason}*`;
+                output += `~~\`${player.name}\`~~ - ${getFaction(player.faction).name} ${(printTrueRole && getRole(player.role).trueName) || getRole(player.role).name} - *${player.deathReason}*`;
             }
         }
         mafiabot.syncMessage(outputChannelId || channelId, output);
         return true;
     }
     return false;
+}
+var printCurrentPlayersWithTrueRole = (channelId, outputChannelId) => {
+    return printCurrentPlayers(channelId, outputChannelId || channelId, true);
 }
 var printUnconfirmedPlayers = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
@@ -471,7 +477,11 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            if (!printCurrentPlayers(message.channel.id)) {
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
+            if (gameInChannel) {
+                var printPlayersFunc = gameInChannel.state === STATE.GAMEOVER ? printCurrentPlayersWithTrueRole : printCurrentPlayers;
+                printPlayersFunc(message.channel.id);
+            } else {
                 mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
             }
         },
