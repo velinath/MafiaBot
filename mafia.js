@@ -10,10 +10,9 @@ const Discord = require('discord.js');
 
 const roles = require('./roles');
 const factions = require('./factions');
-const STATE = require('./gameStates.js');
-
-const s = require('./pluralize.js');
-const closestPlayer = require('./closestPlayer.js');
+const STATE = require('./lib/gameStates.js');
+const s = require('./lib/pluralize.js');
+const closestPlayer = require('./lib/closestPlayer.js');
 
 // init stuff
 var getData = () => {

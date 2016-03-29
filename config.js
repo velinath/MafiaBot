@@ -11,9 +11,9 @@ module.exports = _.merge({
     admins: [
         '88020438474567680', // fool
     ],
-    feedbackFilePath: 'feedback.txt',
-    dataJSONPath: 'data.json',
-    rolesetJSONPath: 'rolesets.json',
+    feedbackFilePath: 'data/feedback.txt',
+    dataJSONPath: 'data/data.json',
+    rolesetJSONPath: 'data/rolesets.json',
 
     mainLoopInterval: 250,
     syncMessageTimeout: 2000,

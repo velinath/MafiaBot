@@ -1,6 +1,6 @@
 const _ = require('lodash');
-const STATE = require('../../gameStates.js');
-const closestPlayer = require('../../closestPlayer.js');
+const STATE = require('../../lib/gameStates.js');
+const closestPlayer = require('../../lib/closestPlayer.js');
 
 module.exports = (ext) => {
     var self = {
