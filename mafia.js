@@ -100,6 +100,10 @@ var checkForLynch = channelId => {
                     lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
                 }
                 gameInChannel.state = STATE.NIGHT;
+                gameInChannel.voteHistory.push({
+                    day: gameInChannel.day,
+                    votes: _.clone(gameInChannel.votes), // clone because the array will be cleared soon
+                });
                 gameInChannel.nightActionReminderTime = config.nightActionReminderInterval;
                 if (!checkForGameOver(channelId)) {
                     var livePlayers = _.filter(gameInChannel.players, 'alive');
@@ -217,6 +221,23 @@ var listUsers = listOfUserIds => {
     }
     return output;
 }
+var listVotes = (listOfVotes, channelId) => {
+    var voteOutput = '';
+    var gameInChannel = _.find(data.games, {channelId: channelId});
+    if (listOfVotes.length && gameInChannel) {
+        var votesByTarget = _.sortBy(_.toArray(_.groupBy(listOfVotes, 'targetId')), function(group) { return -group.length; });
+        for (var i = 0; i < votesByTarget.length; i++) {
+            var voteId = votesByTarget[i][0].targetId;
+            if (voteId !== 'NO LYNCH') {
+                voteId = '<@' + voteId + '>';
+            }
+            voteOutput += `\n(${votesByTarget[i].length}) ${voteId}: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '`' + _.find(gameInChannel.players, {id: vote.playerId}).name + '`'; }).join(', ')}`;
+        }
+    } else {
+        voteOutput += `**\nThere are currently no votes!**`;
+    }
+    return voteOutput;
+}
 var sendPlayerRoleInfo = player => {
     mafiabot.sendMessage(player.id, `Your role is ***${getFaction(player.faction).name} ${getRole(player.role).name}***.\n${getRole(player.role).description}\n${getFaction(player.faction).description}`);
 }
@@ -271,23 +292,8 @@ var printDayState = (channelId, outputChannelId) => {
 var printCurrentVotes = (channelId, outputChannelId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel && gameInChannel.day > 0) {
-        var voteOutput = '';
-        if (gameInChannel.votes.length) {
-            var votesByTarget = _.sortBy(_.toArray(_.groupBy(gameInChannel.votes, 'targetId')), function(group) { return -group.length; });
-            for (var i = 0; i < votesByTarget.length; i++) {
-                var voteId = votesByTarget[i][0].targetId;
-                if (voteId !== 'NO LYNCH') {
-                    voteId = '<@' + voteId + '>';
-                }
-                voteOutput += `\n(${votesByTarget[i].length}) ${voteId}: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '`' + _.find(gameInChannel.players, {id: vote.playerId}).name + '`'; }).join(', ')}`;
-            }
-        } else {
-            voteOutput += `**\nThere are currently no votes!**`;
-        }
-        mafiabot.syncMessage(outputChannelId || channelId,
-`**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**
-Use ${pre}vote, ${pre}NL, and ${pre}unvote commands to vote.${voteOutput}`
-            );
+        var voteOutput = listVotes(gameInChannel.votes, channelId);
+        mafiabot.syncMessage(outputChannelId || channelId, `**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**\nUse ${pre}vote, ${pre}NL, and ${pre}unvote commands to vote.${voteOutput}`);
         return true;
     }
     return false;
@@ -529,6 +535,31 @@ var baseCommands = [
         },
     },
     {
+        commands: ['votehistory', 'votalhistory'],
+        description: 'Show list of votals at the end of each previous day for the game in channel',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
+            if (gameInChannel) {
+                if (gameInChannel.voteHistory.length) {
+                    var output = ``;
+                    for (var i = 0; i < gameInChannel.voteHistory.length; i++) {
+                        var voteHistory = gameInChannel.voteHistory[i];
+                        output += `***Day ${voteHistory.day}:*** `;
+                        output += listVotes(voteHistory.votes, message.channel.id);
+                        output += `\n\n`;
+                    }
+                    mafiabot.sendMessage(message.channel.id, output);
+                } else {
+                    mafiabot.sendMessage(message.channel.id, output || `There's no vote history yet!`);
+                }
+            } else {
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
+            }
+        },
+    },
+    {
         commands: ['creategame'],
         description: 'Create a game in this channel and become the host',
         adminOnly: false,
@@ -548,6 +579,7 @@ var baseCommands = [
                     day: 0,
                     night: false,
                     votes: [],
+                    voteHistory: [],
                     nightActions: [],
                     nightKills: {},
                     mafiaDidNightAction: false,
