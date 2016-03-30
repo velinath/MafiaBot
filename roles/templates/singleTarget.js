@@ -10,7 +10,13 @@ module.exports = (ext) => {
         onNight: (p) => {
             p.player.roleData.didAction = false;
             p.player.roleData.noAction = false;
-            p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: p.player.id}), `It is now night ${p.game.day}! Use the ***${pre}${ext.command}*** command to ${ext.commandText} (ex: *${pre}${ext.command} fool*). ***${pre}cancel*** to cancel.\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`);
+            var output = `It is now night ${p.game.day}! Use the ***${pre}${ext.command}*** command to ${ext.commandText} (ex: *${pre}${ext.command} fool*). ***${pre}cancel*** to cancel.`;
+            if (ext.mustDoAction) {
+                output += `\n**NOTE**: You MUST take an action every night! You cannot do use the *${pre}noaction* command like other roles.`;
+            } else {
+                output += `\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`;
+            }
+            p.mafiabot.sendMessage(p.player.id, output);
         },
         onPMCommand: (p) => {
             if (p.game.state != STATE.NIGHT) {
@@ -39,7 +45,7 @@ module.exports = (ext) => {
                 } else {
                     p.mafiabot.reply(p.message, `You can't ${ext.command} tonight. ${canDoActionResult}`);
                 }
-            } else if (p.args[0] == 'cancel' || p.args[0] == 'noaction') {
+            } else if (p.args[0] == 'cancel' || (!ext.mustDoAction && p.args[0] == 'noaction')) {
                 var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
                 if (action) {
                     p.player.roleData.didAction = false;
@@ -47,7 +53,7 @@ module.exports = (ext) => {
                 }
                 p.game.nightActions = _.reject(p.game.nightActions, {action: ext.actionText, playerId: p.player.id});
             }
-            if (p.args[0] == 'noaction') {
+            if (!ext.mustDoAction && p.args[0] == 'noaction') {
                 p.player.roleData.noAction = true;
                 p.mafiabot.reply(p.message, `**You are taking no action tonight.**`);
             }

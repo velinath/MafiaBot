@@ -4,7 +4,7 @@ const templates = require('./templates');
 var self = templates.extend(templates.singleTarget, {
     id: 'roleblocker',
     name: 'Roleblocker',
-    description: `You can block someone from performing their role each night with the *${pre}block* command.`,
+    description: `You can block someone from performing their role each night with the *${pre}block* command. Your target gets notified that they were roleblocked if you blocked an action.`,
     command: 'block',
     commandGerund: 'blocking',
     commandText: 'block a target from performing their role',

@@ -15,7 +15,7 @@ var self = templates.extend(templates.singleTarget, {
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
             var target = _.find(p.game.players, {id: action.targetId});
-            p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: action.playerId}), `You have scanned player **<@${action.targetId}>** as **SCUM**!`); // same as cop except always scum
+            p.mafiabot.sendMessage(action.playerId, `You have scanned player **<@${action.targetId}>** as **SCUM**!`); // same as cop except always scum
         }
     },
 });

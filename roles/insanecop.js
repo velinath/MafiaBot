@@ -15,8 +15,8 @@ var self = templates.extend(templates.singleTarget, {
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
             var target = _.find(p.game.players, {id: action.targetId});
-            var innocent = target.faction != 'mafia';
-            p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: action.playerId}), `You have scanned player **<@${action.targetId}>** as **${!innocent ? 'INNOCENT' : 'SCUM'}**!`); // same as cop except flipped results
+            var innocent = (target.faction != 'mafia' && target.role != 'miller') || target.role == 'godfather';
+            p.mafiabot.sendMessage(action.playerId, `You have scanned player **<@${action.targetId}>** as **${!innocent ? 'INNOCENT' : 'SCUM'}**!`); // same as cop except flipped results
         }
     },
 });

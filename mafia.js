@@ -95,6 +95,7 @@ var checkForLynch = channelId => {
                     mafiabot.syncMessage(channelId, `No one was lynched.`, 1000);
                 } else {
                     var lynchedPlayer = _.find(gameInChannel.players, {id: targetId});
+                    fireEvent(getRole(lynchedPlayer.role).onLynched, {game: gameInChannel, player: lynchedPlayer});
                     mafiabot.syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${getFaction(lynchedPlayer.faction).name} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
                     lynchedPlayer.alive = false;
                     lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
@@ -139,6 +140,7 @@ Use the ***${pre}noaction*** command to confirm that you are active but taking n
     return false;
 }
 var checkForGameOver = channelId => {
+    return false;
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var livePlayers = _.filter(gameInChannel.players, 'alive');
@@ -225,13 +227,13 @@ var listVotes = (listOfVotes, channelId) => {
     var voteOutput = '';
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (listOfVotes.length && gameInChannel) {
-        var votesByTarget = _.sortBy(_.toArray(_.groupBy(listOfVotes, 'targetId')), function(group) { return -group.length; });
+        var votesByTarget = _.sortBy(_.toArray(_.groupBy(listOfVotes, 'targetId')), group => -group.length);
         for (var i = 0; i < votesByTarget.length; i++) {
             var voteId = votesByTarget[i][0].targetId;
             if (voteId !== 'NO LYNCH') {
                 voteId = '<@' + voteId + '>';
             }
-            voteOutput += `\n(${votesByTarget[i].length}) ${voteId}: ${_.map(_.sortBy(votesByTarget[i], function(vote) { return vote.time }), function(vote) { return '`' + _.find(gameInChannel.players, {id: vote.playerId}).name + '`'; }).join(', ')}`;
+            voteOutput += `\n(${votesByTarget[i].length}) ${voteId}: ${_.map(_.sortBy(votesByTarget[i], vote => vote.time), function(vote) { return '`' + _.find(gameInChannel.players, {id: vote.playerId}).name + '`'; }).join(', ')}`;
         }
     } else {
         voteOutput += `**\nThere are currently no votes!**`;
@@ -577,7 +579,6 @@ var baseCommands = [
                     votesToEndGame: [],
                     state: STATE.INIT,
                     day: 0,
-                    night: false,
                     votes: [],
                     voteHistory: [],
                     nightActions: [],
@@ -802,8 +803,8 @@ var baseCommands = [
                     if (target) {
                         if (!target.alive) {
                             mafiabot.reply(message, `You can't vote for the dead player ${args[1]}!`);
-                        } else if (target.id == message.author.id) {
-                            mafiabot.reply(message, `You can't vote for yourself!`);
+                        // } else if (target.id == message.author.id) {
+                        //     mafiabot.reply(message, `You can't vote for yourself!`);
                         } else {
                             _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                             gameInChannel.votes.push({playerId: message.author.id, targetId: target.id, time: new Date()});
