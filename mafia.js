@@ -267,7 +267,7 @@ var printUnconfirmedPlayers = (channelId, outputChannelId) => {
     if (gameInChannel) {
         var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
         var output = unconfirmedPlayers.length 
-            ? `${s(unconfirmedPlayers.length, 'player')} still must ${pre}confirm for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
+            ? `**${s(unconfirmedPlayers.length, 'player')}** still must ***${pre}confirm*** for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
         mafiabot.syncMessage(outputChannelId || channelId, output);
@@ -583,6 +583,7 @@ var baseCommands = [
                     nightActions: [],
                     nightKills: {},
                     mafiaDidNightAction: false,
+                    confirmingReminderTime: config.confirmingReminderInterval,
                     nightActionReminderTime: config.nightActionReminderInterval,
                 };
                 data.games.push(gameInChannel);
@@ -651,6 +652,7 @@ var baseCommands = [
                                 if (mafiaChannel) {
                                     gameInChannel.state = STATE.CONFIRMING;
                                     gameInChannel.mafiaChannelId = mafiaChannel.id;
+                                    gameInChannel.confirmingReminderTime = config.confirmingReminderInterval;
                                     mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **${pre}confirm** in this channel to confirm your role.`);
                                     printCurrentPlayers(message.channel.id);
 
@@ -776,7 +778,6 @@ var baseCommands = [
                 if (player) {
                     player.confirmed = true;
                     mafiabot.syncReply(message, `Thanks for confirming for the current game hosted by <@${gameInChannel.hostId}>!`);
-                    printUnconfirmedPlayers(message.channel.id);
 
                     var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
                     if (!unconfirmedPlayers.length) {
@@ -991,6 +992,15 @@ var mainLoop = function() {
     // game-specific loops
     for (var i = 0; i < data.games.length; i++) {
         var game = data.games[i];
+
+        if (game.state == STATE.CONFIRMING) {
+            // send confirming action reminders
+            game.confirmingReminderTime -= dt;
+            if (game.confirmingReminderTime <= 0) {
+                printUnconfirmedPlayers(game.channelId);
+                game.confirmingReminderTime = config.confirmingReminderInterval;
+            }
+        }
 
         if (game.state == STATE.NIGHT) {
             var livePlayers = _.filter(game.players, 'alive');
