@@ -140,7 +140,6 @@ Use the ***${pre}noaction*** command to confirm that you are active but taking n
     return false;
 }
 var checkForGameOver = channelId => {
-    return false;
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
         var livePlayers = _.filter(gameInChannel.players, 'alive');
