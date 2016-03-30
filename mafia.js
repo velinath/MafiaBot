@@ -41,6 +41,20 @@ mafiabot.syncMessage = (channelId, content, delay) => {
 mafiabot.syncReply = (message, content, delay) => {
     mafiabot.syncMessage(message.channel.id, message.author + ', ' + content, delay);
 };
+mafiabot.longMessage = (channelId, content) => {
+    const linesPerMessage = 15;
+    var lines = content.split('\n');
+    var output = '';
+    for (var i = 0; i < lines.length; i++) {
+        output += lines[i] + '\n';
+        if (i % linesPerMessage === linesPerMessage - 1 && i !== lines.length - 1) {
+            output += `*(cont)*`;
+            mafiabot.syncMessage(channelId, output);
+            output = ``;
+        }
+    }
+    mafiabot.syncMessage(channelId, output);
+}
 var readyToSendSyncMessage = true;
 var timeLastSentSyncMessage = new Date();
 
@@ -210,7 +224,7 @@ var listRolesets = rolesets => {
     var sortedRolesets = _.sortBy(rolesets, set => set.roles.length);
     for (var i = 0; i < sortedRolesets.length; i++) {
         var roleset = sortedRolesets[i];
-        var formattedRoles = _.map(roleset.roles, role => `\`${getFaction(role.faction).name} ${getRole(role.role).name}\``).join(', ');
+        var formattedRoles = _.map(roleset.roles, role => `\`${getFaction(role.faction).name} ${getRole(role.role).trueName || getRole(role.role).name}\``).join(', ');
         output += `\n***${roleset.name}* (${roleset.roles.length})** | ${formattedRoles}`;
     }
     return output;
@@ -245,7 +259,7 @@ var sendPlayerRoleInfo = player => {
 var printCurrentPlayers = (channelId, outputChannelId, printTrueRole) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
-        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by \`${_.find(gameInChannel.players, {id: gameInChannel.hostId}).name}\`:`;
+        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by \`${_.find(mafiabot.users, {id: gameInChannel.hostId}).name}\`:`;
         for (var i = 0; i < gameInChannel.players.length; i++) {
             var player = gameInChannel.players[i];
             output += `\n${i + 1}) `;
@@ -308,18 +322,12 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: false,
         onMessage: message => {
-            const commandsPerMessage = 15;
             var output = `\nType one of the following commands to interact with MafiaBot:`;
             for (var i = 0; i < baseCommands.length; i++) {
                 var comm = baseCommands[i];
                 output += `\n**${pre}${comm.commands.join('/')}** - ${comm.description}${comm.adminOnly ? ' - *Admin Only*' : ''}${comm.activatedOnly ? ' - *Activated Channel Only*' : ''}`;
-                if (i % commandsPerMessage === commandsPerMessage - 1 && i !== baseCommands.length - 1) {
-                    output += `\n*(cont)*`;
-                    mafiabot.syncMessage(message.channel.id, output);
-                    output = ``;
-                }
             }
-            mafiabot.syncMessage(message.channel.id, output);
+            mafiabot.longMessage(message.channel.id, output);
         },
     },
     {
@@ -376,7 +384,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.reply(message, `Here the list of available roles:${listRoles(roles)}`);
+            mafiabot.longMessage(message.channel.id, `Current list of available roles:${listRoles(roles)}`);
         },
     },
     {
@@ -385,7 +393,7 @@ var baseCommands = [
         adminOnly: true,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.reply(message, `Here the list of available rolesets:${listRolesets(getRolesets())}`);
+            mafiabot.longMessage(message.channel.id, `Current list of available rolesets:${listRolesets(getRolesets())}`);
         },
     },
     {
@@ -781,6 +789,7 @@ var baseCommands = [
 
                     var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
                     if (!unconfirmedPlayers.length) {
+                        printUnconfirmedPlayers(message.channel.id);
                         gameInChannel.state = STATE.READY;
                     }
                 }
@@ -910,7 +919,7 @@ mafiabot.on("message", message => {
         // pm channel setup
         if (!_.find(data.pmChannels, {playerId: message.channel.recipient.id})) {
             data.pmChannels.push({playerId: message.channel.recipient.id, channelId: message.channel.id});
-            mafiabot.reply(message, 'Thanks for the one-time private message to open a direct channel of communication between us! You can join and play mafia games on this server.');
+            mafiabot.reply(message, 'Thanks for the one-time private message to open a direct channel of communication between us! You can now join and play mafia games on this server.');
         }
         
         var gameWithPlayer = getGameFromPlayer(message.author.id);
@@ -923,9 +932,9 @@ mafiabot.on("message", message => {
         }
     }
 
-    // receiving message from mafia channel
+    // receiving command from mafia channel
     var game = _.find(data.games, {mafiaChannelId: message.channel.id});
-    if (game) {
+    if (game && contentLower.indexOf(pre) == 0) {
         // terrible chunk of code to emulate a vig kill
         var player = _.find(game.players, {id: message.author.id});
         var actionText = 'mafia kill';
@@ -952,10 +961,13 @@ mafiabot.on("message", message => {
                     mafiabot.reply(message, `**You have canceled killing *${_.find(game.players, {id: action.targetId}).name}*.**`);
                 }
                 game.nightActions = _.reject(game.nightActions, {action: actionText});
-            }
-            if (args[0] == 'noaction') {
-                game.mafiaDidNightAction = true;
-                mafiabot.reply(message, `**You are taking no action tonight.**`);
+                if (args[0] == 'noaction') {
+                    game.mafiaDidNightAction = true;
+                    mafiabot.reply(message, `**You are taking no action tonight.**`);
+                }
+            } else {
+                // made a command but it's not a kill, so they are likely trying to use their power role in mafia chat
+                mafiabot.reply(message, `**If you have a power role, you must send me a private message separate from this chat to make that action!**`);
             }
         }
     }
