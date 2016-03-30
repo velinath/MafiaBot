@@ -2,10 +2,10 @@
   "name": "mafiabot",
   "version": "0.1.0",
   "description": "Discord bot for playing Mafia",
-  "main": "mafia.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node mafia.js"
   },
+  "main": "mafia.js",
   "repository": {
     "type": "git",
     "url": "git+https://foolmoron@github.com/foolmoron/MafiaBot.git"
