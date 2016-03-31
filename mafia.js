@@ -14,7 +14,7 @@ const STATE = require('./lib/gameStates.js');
 const s = require('./lib/pluralize.js');
 const closestPlayer = require('./lib/closestPlayer.js');
 
-// init stuff
+// init stuff 
 var getData = () => {
     try { return JSON.parse(fs.readFileSync(config.dataJSONPath).toString()); } catch (e) { return {}; };
 }
