@@ -9,6 +9,8 @@ if (global.DEBUG) {
     };
 }
 module.exports = _.merge({
+    email: 'EMAIL',
+    password: 'PASSWORD',
     admins: [
         '88020438474567680', // fool
     ],
