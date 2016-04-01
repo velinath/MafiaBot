@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const s = require('../pluralize.js');
+const s = require('../lib/pluralize.js');
 const templates = require('./templates');
 
 var self = templates.extend(templates.singleTarget, {
