@@ -679,7 +679,9 @@ var baseCommands = [
 
                                     var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
                                     var mafiaPlayers = _.filter(gameInChannel.players, {faction: 'mafia'});
-                                    mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false });
+                                    mafiabot.overwritePermissions(mafiaChannel, mafiabot.user, { managePermissions: true }).then(function() {
+                                        mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false });
+                                    });
                                     for (var i = 0; i < mafiaPlayers.length; i++) {
                                         var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
                                         mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true });
