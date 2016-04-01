@@ -871,6 +871,8 @@ var baseCommands = [
 
 // set up discord events
 mafiabot.on("message", message => {
+    mafiabot.latestChannel = message.channel.id; // for error handling purposes
+
     var contentLower = message.content.toLowerCase();
     var args = message.content.split(/[ :]/);
     args[0] = args[0].substring(pre.length);
@@ -1004,6 +1006,7 @@ var mainLoop = function() {
     // game-specific loops
     for (var i = 0; i < data.games.length; i++) {
         var game = data.games[i];
+        mafiabot.latestChannel = game.channelId; // for error handling purposes
 
         if (game.state == STATE.CONFIRMING) {
             // send confirming action reminders
