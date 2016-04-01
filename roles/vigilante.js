@@ -2,7 +2,7 @@ const _ = require('lodash');
 const templates = require('./templates');
 const s = require('../lib/pluralize.js');
 
-var shotCount = 1;
+const shotCount = 1;
 var self = templates.extend(templates.singleTarget, {
     id: 'vigilante',
     name: 'Vigilante',

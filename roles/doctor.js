@@ -13,7 +13,7 @@ var self = templates.extend(templates.singleTarget, {
     onActionPhase: (p) => {
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
-            p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) - Infinity;
+            p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) - 1000;
         }
     },
 });
