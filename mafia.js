@@ -1038,6 +1038,10 @@ var mainLoop = function() {
             if (game.timeToNightActionResolution <= 0) {
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];
+                    fireEvent(getRole(player.role).preBlockingPhase, {game: game, player: player});
+                }
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
                     fireEvent(getRole(player.role).onBlockingPhase, {game: game, player: player});
                 }
                 for (var i = 0; i < livePlayers.length; i++) {

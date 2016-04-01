@@ -17,7 +17,7 @@ var self = templates.extend(templates.singleTarget, {
     canDoAction: (p) => {
         return p.player.roleData.assassinCount > 0 ? true : 'You cannot assassinate anyone else for the rest of the game.';
     },
-    onActionPhase: (p) => {
+    preBlockingPhase: (p) => { // can't be roleblocked or bus'd or anything
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
             p.player.roleData.assassinCount--;
