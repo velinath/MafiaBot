@@ -1,9 +1,8 @@
 const _ = require('lodash');
 const s = require('../lib/pluralize.js');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
-module.exports = ext(templates.singleTarget, {
+module.exports = ext(require('./tmpls/singleTarget.js'), {
     id: 'watcher',
     name: 'Watcher',
     description: `You can watch someone at night to see who targeted them with the *${pre}watch* command.`,

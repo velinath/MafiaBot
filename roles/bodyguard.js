@@ -1,8 +1,7 @@
 const _ = require('lodash');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
-module.exports = ext(templates.singleTarget, {
+module.exports = ext(require('./tmpls/singleTarget.js'), {
     id: 'bodyguard',
     name: 'Bodyguard',
     description: `You can guard someone each night, dying in place of them if there was an attempted kill, with the *${pre}guard* command.`,

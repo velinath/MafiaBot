@@ -1,8 +1,7 @@
 const _ = require('lodash');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
-module.exports = ext(templates.singleTarget, {
+module.exports = ext(require('./tmpls/singleTarget.js'), {
     id: 'prostitute',
     name: 'Prostitute',
     description: `You can sleep with someone at night to see if they got up (did an action) that night with the *${pre}sleep* command. Your target gets notified that someone slept with them.`,

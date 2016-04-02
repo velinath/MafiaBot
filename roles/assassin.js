@@ -1,9 +1,8 @@
 const _ = require('lodash');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 const s = require('../lib/pluralize.js');
 
-module.exports = ext(templates.singleTarget, {
+module.exports = ext(require('./tmpls/singleTarget.js'), {
     id: 'assassin',
     name: 'Assassin',
     description: `You can choose to assassinate someone during night, *${s(this.ammo, 'time')}* in the whole game, with the *${pre}assassinate* command.`,

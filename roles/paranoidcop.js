@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
 var cop = require('./cop.js');

@@ -1,9 +1,8 @@
 const _ = require('lodash');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
 
-module.exports = ext(templates.doubleTarget, {
+module.exports = ext(require('./tmpls/doubleTarget.js'), {
     id: 'busdriver',
     name: 'Bus Driver',
     description: `You can swap all the night action targets between two players each night with the *${pre}bus* command.`,

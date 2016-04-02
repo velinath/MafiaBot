@@ -1,8 +1,7 @@
 const _ = require('lodash');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
-module.exports = ext(templates.noAction, {
+module.exports = ext(require('./tmpls/noAction.js'), {
     id: 'pgo',
     name: 'Paranoid Gun Owner',
     description: `You have no active abilities, but you will shoot to death anyone who targets you at night.`,

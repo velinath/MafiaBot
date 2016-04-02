@@ -1,8 +1,7 @@
 const _ = require('lodash');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
-module.exports = ext(templates.singleTarget, {
+module.exports = ext(require('./tmpls/singleTarget.js'), {
     id: 'cop',
     name: 'Cop',
     description: `You can scan someone to determine if they are innocent or not each night with the *${pre}scan* command.`,
@@ -14,7 +13,8 @@ module.exports = ext(templates.singleTarget, {
         var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (action) {
             var target = _.find(p.game.players, {id: action.targetId});
-            var innocent = (target.faction != 'mafia' && target.role != 'miller') || target.role == 'godfather';
+            var targetRole = p.mafiabot.getRole(target.role);
+            var innocent = targetRole.forceInnocent != null ? targetRole.forceInnocent : target.faction != 'mafia';
             if (this.innocenceModifier) {
                 innocent = this.innocenceModifier(innocent); // allows for cop variants
             }

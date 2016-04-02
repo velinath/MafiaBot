@@ -1,8 +1,7 @@
 const _ = require('lodash');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
-module.exports = ext(templates.noAction, {
+module.exports = ext(require('./tmpls/noAction.js'), {
     id: 'bomb',
     name: 'Bomb',
     description: `You have no active abilities, but when you are lynched, you blow up and kill the last person to lynch you.`,

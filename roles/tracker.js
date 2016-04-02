@@ -1,9 +1,8 @@
 const _ = require('lodash');
 const s = require('../lib/pluralize.js');
-const templates = require('./templates');
 const ext = require('../lib/ext.js');
 
-module.exports = ext(templates.singleTarget, {
+module.exports = ext(require('./tmpls/singleTarget.js'), {
     id: 'tracker',
     name: 'Tracker',
     description: `You can track someone at night to see who they targeted with the *${pre}track* command.`,

@@ -60,10 +60,10 @@ var readyToSendSyncMessage = true;
 var timeLastSentSyncMessage = new Date();
 
 // utilities
-var getRole = (roleId) => {
+var getRole = mafiabot.getRole = (roleId) => {
     return _.find(roles, {id: roleId});
 }
-var getFaction = (factionId) => {
+var getFaction = mafiabot.getFaction = (factionId) => {
     return _.find(factions, {id: factionId});
 }
 var getRolesets = () => {
