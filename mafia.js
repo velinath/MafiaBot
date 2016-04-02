@@ -211,7 +211,13 @@ var checkForGameOver = channelId => {
             var mafiaChannel = _.find(mafiabot.channels, {id: gameInChannel.mafiaChannelId});
             var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
             mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: true, sendMessages: true });
-            mafiabot.syncMessage(channelId, `Mafia chat is now open to all players.\nUse the ***${pre}endgame*** command to end the game (and delete the mafia chat forever) so you can start a new game!`);
+            mafiabot.syncMessage(channelId, 
+`The roleset used was called: \`${gameInChannel.roleset}\`
+
+⚠️ **Use the *--feedback* command to report any bad role setups and to send any other comments/suggestions/bugs to the server!** ⚠️
+
+Mafia chat is now open to all players!
+**Use the *${pre}endgame* command to end the game (and delete the mafia chat forever) so you can start a new game!**`);
         };
 
         if (winningFactions.length == 1) {
@@ -368,7 +374,8 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: false,
         onMessage: message => {
-            var output = `## Server: ${message.channel.server.name} | Channel: ${message.channel.name} | User: ${message.author.name} | ${new Date()} | ${new Date(message.timestamp)} ##\n${message.content.substring(11)}\n\n`;
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
+            var output = `## Server: ${message.channel.server.name} | Channel: ${message.channel.name} | User: ${message.author.name} | Roleset: ${gameInChannel ? gameInChannel.roleset : 'N/A'} | ${new Date()} | ${new Date(message.timestamp)} ##\n${message.content.substring(11)}\n\n`;
             fs.appendFile(config.feedbackFilePath, output);
             mafiabot.reply(message, `Thanks for the feedback! ❤`);
         },
@@ -615,6 +622,7 @@ var baseCommands = [
                     channelId: message.channel.id,
                     mafiaChannelId: null,
                     players: [],
+                    roleset: '',
                     votesToEndGame: [],
                     state: STATE.INIT,
                     day: 0,
@@ -698,6 +706,7 @@ var baseCommands = [
 
                                     // pick a random available roleset and randomly assign the roles
                                     var roleset = possibleRolesets[Math.floor(Math.random()*possibleRolesets.length)];
+                                    gameInChannel.roleset = roleset.name;
                                     console.log('Picking roleset:', roleset.name);
                                     var shuffledRoles = _.shuffle(roleset.roles);
                                     for (var i = 0; i < gameInChannel.players.length; i++) {
