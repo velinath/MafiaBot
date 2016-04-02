@@ -12,7 +12,7 @@ module.exports = ext(require('./tmpls/singleTarget.js'), {
     actionText: 'assassin assassinate',
     ammo: 1,
     onGameStart: function(p) {
-        p.player.roleData.ammo = ammo;
+        p.player.roleData.ammo = this.ammo;
     },
     canDoAction: function(p) {
         return p.player.roleData.ammo > 0 ? true : 'You cannot assassinate anyone else for the rest of the game.';
