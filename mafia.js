@@ -50,7 +50,6 @@ mafiabot.longMessage = (channelId, content) => {
     for (var i = 0; i < lines.length; i++) {
         output += lines[i] + '\n';
         if (i % linesPerMessage === linesPerMessage - 1 && i !== lines.length - 1) {
-            output += `*(cont)*`;
             mafiabot.syncMessage(channelId, output);
             output = ``;
         }
