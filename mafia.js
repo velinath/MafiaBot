@@ -61,15 +61,41 @@ var readyToSendSyncMessage = true;
 var timeLastSentSyncMessage = new Date();
 
 // utilities
+var roleCache = {};
 var getRole = mafiabot.getRole = (roleId) => {
-    var splitRoles = roleId.split('+').reverse(); // mod1+mod2+baserole => [baserole, mod1, mod2] ex: bp+miller+cop
-    var rolesAndMods = splitRoles.map((roleOrMod, i) => i == 0 ? _.find(roles, {id: roleOrMod}) : mods[roleOrMod]);
-    var role = ext(...rolesAndMods);
-    role.name = rolesAndMods.reverse().map(item => item.name).join(' ');
-    return role;
+    if (!roleCache[roleId]) {
+        // combine role and mods
+        var splitRoles = roleId.split('+').reverse(); // mod1+mod2+baserole => [baserole, mod1, mod2] ex: bp+miller+cop
+        var rolesAndMods = splitRoles.map((roleOrMod, i) => i == 0 ? _.find(roles, {id: roleOrMod}) : mods[roleOrMod]);
+        var role = ext(...rolesAndMods);
+        // modified role name
+        role.name = rolesAndMods.reverse().map(item => item.name).join(' ');
+        // bind all functions to this specific role combination
+        for (var prop in role) {
+            if (typeof(role[prop]) === 'function') {
+                role[prop] = role[prop].bind(role);
+            }
+        }
+        // cache role
+        roleCache[roleId] = role;
+    }
+    return roleCache[roleId];
 }
+var factionCache = {};
 var getFaction = mafiabot.getFaction = (factionId) => {
-    return _.find(factions, {id: factionId});
+    if (!factionCache[factionId]) {
+        // clone object first so we don't pollute the require cache
+        var faction = ext({}, _.find(factions, {id: factionId}));
+        // bind all functions to this specific faction combination
+        for (var prop in faction) {
+            if (typeof(faction[prop]) === 'function') {
+                faction[prop] = faction[prop].bind(faction);
+            }
+        }
+        // cache faction
+        factionCache[factionId] = faction;
+    }
+    return factionCache[factionId];
 }
 var getRolesets = () => {
     try { return JSON.parse(fs.readFileSync(config.rolesetJSONPath).toString()); } catch (e) { return []; };
