@@ -26,6 +26,40 @@
 		]
 	},
 	{
+		"name": "Shootout",
+		"roles": [
+			{
+				"faction": "independent",
+				"role": "vigilante"
+			},
+			{
+				"faction": "independent",
+				"role": "vigilante"
+			},
+			{
+				"faction": "independent",
+				"role": "vigilante"
+			}
+		]
+	},
+	{
+		"name": "Luck",
+		"roles": [
+			{
+				"faction": "town",
+				"role": "serialkiller"
+			},
+			{
+				"faction": "independent",
+				"role": "serialkiller"
+			},
+			{
+				"faction": "mafia",
+				"role": "serialkiller"
+			}
+		]
+	},
+	{
 		"name": "power5",
 		"roles": [
 			{
@@ -101,6 +135,31 @@
 		]
 	},
 	{
+		"name": "Pentakill",
+		"roles": [
+			{
+				"faction": "town",
+				"role": "cop"
+			},
+			{
+				"faction": "town",
+				"role": "miller"
+			},
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "independent",
+				"role": "prostitute"
+			},
+			{
+				"faction": "mafia",
+				"role": "vanilla"
+			}
+		]
+	},
+	{
 		"name": "whyareyouplayingwith6",
 		"roles": [
 			{
@@ -126,6 +185,35 @@
 			{
 				"faction": "mafia",
 				"role": "pgo"
+			}
+		]
+	},
+	{
+		"name": "Manhunt",
+		"roles": [
+			{
+				"faction": "town",
+				"role": "cop"
+			},
+			{
+				"faction": "town",
+				"role": "vigilante"
+			},
+			{
+				"faction": "town",
+				"role": "doctor"
+			},
+			{
+				"faction": "town",
+				"role": "miller"
+			},
+			{
+				"faction": "town",
+				"role": "tracker"
+			},
+			{
+				"faction": "mafia",
+				"role": "godfather"
 			}
 		]
 	},
