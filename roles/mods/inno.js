@@ -1,3 +1,5 @@
 module.exports = {
-    forceInnocent: true
+    id: 'inno',
+    name: 'Innocent-scanning',
+    forceInnocent: true,
 };

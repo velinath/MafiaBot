@@ -1,3 +1,5 @@
 module.exports = {
-    bulletproof: true
+    id: 'bp',
+    name: 'Bullet-proof',
+    bulletproof: true,
 };

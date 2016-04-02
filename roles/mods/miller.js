@@ -1,3 +1,5 @@
 module.exports = {
-    forceInnocent: false
+    id: 'miller',
+    name: 'Miller',
+    forceInnocent: false,
 };

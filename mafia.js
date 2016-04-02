@@ -10,6 +10,7 @@ const Discord = require('discord.js');
 const ext = require('./lib/ext.js');
 
 const roles = require('./roles');
+const mods = require('./roles/mods');
 const factions = require('./factions');
 const STATE = require('./lib/gameStates.js');
 const s = require('./lib/pluralize.js');
@@ -61,7 +62,11 @@ var timeLastSentSyncMessage = new Date();
 
 // utilities
 var getRole = mafiabot.getRole = (roleId) => {
-    return _.find(roles, {id: roleId});
+    var splitRoles = roleId.split('+').reverse(); // mod1+mod2+baserole => [baserole, mod1, mod2] ex: bp+miller+cop
+    var rolesAndMods = splitRoles.map((roleOrMod, i) => i == 0 ? _.find(roles, {id: roleOrMod}) : mods[roleOrMod]);
+    var role = ext(...rolesAndMods);
+    role.name = rolesAndMods.reverse().map(item => item.name).join(' ');
+    return role;
 }
 var getFaction = mafiabot.getFaction = (factionId) => {
     return _.find(factions, {id: factionId});
