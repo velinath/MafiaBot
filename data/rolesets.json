@@ -3,8 +3,8 @@
 		"name": "testingpurposesonly!",
 		"roles": [
 			{
-				"faction": "mafia",
-				"role": "serialkiller"
+				"faction": "town",
+				"role": "cop"
 			}
 		]
 	},

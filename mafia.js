@@ -7,6 +7,7 @@ const fs = require('fs');
 const config = require('./config.js');
 const _ = require('lodash');
 const Discord = require('discord.js');
+const ext = require('./lib/ext.js');
 
 const roles = require('./roles');
 const factions = require('./factions');

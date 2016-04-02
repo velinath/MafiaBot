@@ -1,8 +1,8 @@
 const templates = require('./templates');
+const ext = require('../lib/ext.js');
 
-var self = templates.extend(templates.noAction, {
+module.exports = ext(templates.noAction, {
     id: 'vanilla',
     name: 'Vanilla',
     description: `You have no special abilities.`,
 });
-module.exports = self;

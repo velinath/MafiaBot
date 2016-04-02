@@ -1,7 +1,8 @@
 const _ = require('lodash');
 const templates = require('./templates');
+const ext = require('../lib/ext.js');
 
-var self = templates.extend(templates.singleTarget, {
+module.exports = ext(templates.singleTarget, {
     id: 'roleblocker',
     name: 'Roleblocker',
     description: `You can block someone from performing their role each night with the *${pre}block* command. Your target gets notified that they were roleblocked if you blocked an action.`,
@@ -9,8 +10,8 @@ var self = templates.extend(templates.singleTarget, {
     commandGerund: 'blocking',
     commandText: 'block a target from performing their role',
     actionText: 'roleblocker block',
-    onBlockTargetingPhase: (p) => {
-        var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
+    onBlockTargetingPhase: function(p) {
+        var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (action) {
             var previousNightActionCount = p.game.nightActions.length;
             // all redirecting action texts need to be put in this array!
@@ -24,8 +25,8 @@ var self = templates.extend(templates.singleTarget, {
             }
         }
     },
-    onBlockingPhase: (p) => {
-        var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
+    onBlockingPhase: function(p) {
+        var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (action) {
             var previousNightActionCount = p.game.nightActions.length;
             p.game.nightActions = _.reject(p.game.nightActions, {playerId: action.targetId});
@@ -36,4 +37,3 @@ var self = templates.extend(templates.singleTarget, {
         }
     },
 });
-module.exports = self;

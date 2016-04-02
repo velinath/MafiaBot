@@ -1,7 +1,9 @@
 const _ = require('lodash');
 const templates = require('./templates');
+const ext = require('../lib/ext.js');
 
-var self = templates.extend(templates.doubleTarget, {
+
+module.exports = ext(templates.doubleTarget, {
     id: 'busdriver',
     name: 'Bus Driver',
     description: `You can swap all the night action targets between two players each night with the *${pre}bus* command.`,
@@ -10,8 +12,8 @@ var self = templates.extend(templates.doubleTarget, {
     commandText: 'swap all night actions that target one player to the other, and vice-versa',
     actionText: 'busdriver bus',
     canSelfTarget: false,
-    onTargetingPhase: (p) => {
-        var actions = _.filter(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
+    onTargetingPhase: function(p) {
+        var actions = _.filter(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (actions.length == 2) {
             var target1 = actions[0].targetId;
             var target2 = actions[1].targetId;
@@ -29,4 +31,3 @@ var self = templates.extend(templates.doubleTarget, {
         }
     },
 });
-module.exports = self;

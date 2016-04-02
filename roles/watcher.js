@@ -1,8 +1,9 @@
 const _ = require('lodash');
 const s = require('../lib/pluralize.js');
 const templates = require('./templates');
+const ext = require('../lib/ext.js');
 
-var self = templates.extend(templates.singleTarget, {
+module.exports = ext(templates.singleTarget, {
     id: 'watcher',
     name: 'Watcher',
     description: `You can watch someone at night to see who targeted them with the *${pre}watch* command.`,
@@ -10,7 +11,7 @@ var self = templates.extend(templates.singleTarget, {
     commandGerund: 'watching',
     commandText: 'watch a target to see who targets them',
     actionText: 'watcher watch',
-    onActionPhase: (p) => {
+    onActionPhase: function(p) {
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
             var playersActingOnTarget = _.uniq(_.filter(p.game.nightActions, {targetId: action.targetId}).map(act => act.playerId));
@@ -22,4 +23,3 @@ var self = templates.extend(templates.singleTarget, {
         }
     },
 });
-module.exports = self;

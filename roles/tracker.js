@@ -1,8 +1,9 @@
 const _ = require('lodash');
 const s = require('../lib/pluralize.js');
 const templates = require('./templates');
+const ext = require('../lib/ext.js');
 
-var self = templates.extend(templates.singleTarget, {
+module.exports = ext(templates.singleTarget, {
     id: 'tracker',
     name: 'Tracker',
     description: `You can track someone at night to see who they targeted with the *${pre}track* command.`,
@@ -10,8 +11,8 @@ var self = templates.extend(templates.singleTarget, {
     commandGerund: 'tracking',
     commandText: 'track a target to see who they targeted',
     actionText: 'tracker track',
-    onActionPhase: (p) => {
-        var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
+    onActionPhase: function(p) {
+        var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (action) {
             var targetActionTargets = _.uniq(_.filter(p.game.nightActions, {playerId: action.targetId}).map(act => act.targetId));
             if (targetActionTargets.length) {
@@ -22,4 +23,3 @@ var self = templates.extend(templates.singleTarget, {
         }
     },
 });
-module.exports = self;
