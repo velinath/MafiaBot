@@ -736,9 +736,7 @@ var baseCommands = [
                             deathReason: '',
                             faction: null,
                             role: null,
-                            roleData: {
-                                actions: [],
-                            },
+                            roleData: {},
                         };
                         gameInChannel.players.push(newPlayer);
                         mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> joined the current game hosted by <@${gameInChannel.hostId}>!`);
@@ -1044,11 +1042,15 @@ var mainLoop = function() {
                 }
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];
-                    fireEvent(getRole(player.role).onBlockingPhase, {game: game, player: player});
+                    fireEvent(getRole(player.role).onBlockTargetingPhase, {game: game, player: player});
                 }
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];
                     fireEvent(getRole(player.role).onTargetingPhase, {game: game, player: player});
+                }
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
+                    fireEvent(getRole(player.role).onBlockingPhase, {game: game, player: player});
                 }
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];

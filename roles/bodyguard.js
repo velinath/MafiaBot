@@ -10,11 +10,13 @@ var self = templates.extend(templates.singleTarget, {
     commandText: 'guard a target from dying tonight, in exchange for your life',
     actionText: 'bodyguard guard',
     canSelfTarget: false,
-    onActionPhase: (p) => {
+    onNightResolved: (p) => { // do bodyguard after all kills have gone through
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
-            p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) - 1000;
-            p.game.nightKills[action.playerId] = (p.game.nightKills[action.playerId] || 0) + 1;
+            if (p.game.nightKills[action.targetId] > 0) {
+                p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) - 1000;
+                p.game.nightKills[action.playerId] = (p.game.nightKills[action.playerId] || 0) + 1;
+            }
         }
     },
 });

@@ -15,7 +15,7 @@ var self = templates.extend(templates.singleTarget, {
         if (action) {
             var targetActionTargets = _.uniq(_.filter(p.game.nightActions, {playerId: action.targetId}).map(act => act.targetId));
             if (targetActionTargets.length) {
-                p.mafiabot.sendMessage(action.playerId, `Your target **<@${action.targetId}>** targeted **${s(targetActionTargets.length), 'player'}** last night: ${targetActionTargets.map(targetId => '<@' + targedId + '>').join(',')}`);
+                p.mafiabot.sendMessage(action.playerId, `Your target **<@${action.targetId}>** targeted **${s(targetActionTargets.length, 'player')}** last night: ${targetActionTargets.map(targetId => '<@' + targetId + '>').join(', ')}`);
             } else {
                 p.mafiabot.sendMessage(action.playerId, `Your target **<@${action.targetId}>** did not target any players last night.`);
             }

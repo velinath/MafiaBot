@@ -9,6 +9,21 @@ var self = templates.extend(templates.singleTarget, {
     commandGerund: 'blocking',
     commandText: 'block a target from performing their role',
     actionText: 'roleblocker block',
+    onBlockTargetingPhase: (p) => {
+        var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
+        if (action) {
+            var previousNightActionCount = p.game.nightActions.length;
+            // all redirecting action texts need to be put in this array!
+            const redirectingActions = [
+                'busdriver bus',
+            ];
+            p.game.nightActions = _.reject(p.game.nightActions, action => redirectingActions.indexOf(action.action) >= 0);
+            // only send roleblock message when an action was blocked
+            if (p.game.nightActions.length !== previousNightActionCount) {
+                p.mafiabot.sendMessage(_.find(p.mafiabot.users, {id: action.targetId}), `**You have been roleblocked!**`);                
+            }
+        }
+    },
     onBlockingPhase: (p) => {
         var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
         if (action) {
