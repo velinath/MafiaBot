@@ -316,7 +316,7 @@ var sendPlayerRoleInfo = player => {
 var printCurrentPlayers = (channelId, outputChannelId, printTrueRole) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
-        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by \`${_.find(mafiabot.users, {id: gameInChannel.hostId})}\`:`;
+        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by \`${_.find(mafiabot.users, {id: gameInChannel.hostId}).name}\`:`;
         for (var i = 0; i < gameInChannel.players.length; i++) {
             var player = gameInChannel.players[i];
             output += `\n${i + 1}) `;
