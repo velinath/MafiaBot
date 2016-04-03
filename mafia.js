@@ -1211,8 +1211,13 @@ var mainLoop = function() {
 };
 
 // login and kick off main loop after everything is set up
-mafiabot.login(config.email, config.password).then(() => { 
-    // but wait for channels to be cached first or else there will be weird bugs
+mafiabot.login(config.email, config.password, (error, token) => {
+    // crash on login error
+    if (error) {
+        console.log(error.response.error.text);
+        process.exit(1);
+    }
+    // wait for channels to be cached first or else there will be weird bugs
     var checkForChannelsThenKickoff = () => {
         if (mafiabot.channels.length) {
             mainLoop(0);
