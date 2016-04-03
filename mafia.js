@@ -389,6 +389,15 @@ var baseCommands = [
         },
     },
     {
+        commands: ['reboot'],
+        description: 'Reboots MafiaBot on the server',
+        adminOnly: true,
+        activatedOnly: false,
+        onMessage: message => {
+            throw new Error(`Rebooting MafiaBot due to admin ${message.author.name}'s --reboot command!`);
+        },
+    },
+    {
         commands: ['activatemafia'],
         description: 'Activate MafiaBot on this channel',
         adminOnly: true,

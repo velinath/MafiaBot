@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Discord bot for playing Mafia",
   "scripts": {
-    "start": "node mafia.js"
+    "start": "node --harmony_rest_parameters mafia-release.js"
   },
   "main": "mafia.js",
   "repository": {
