@@ -256,6 +256,15 @@ var listRoles = roles => {
     }
     return output;
 }
+var listMods = mods => {
+    var output = '';
+    var sortedMods = _.sortBy(_.map(mods, (val, key) => _.assignIn({}, val, {id: key})), 'id');
+    for (var i = 0; i < sortedMods.length; i++) {
+        var mod = sortedMods[i];
+        output += `\n***${mod.id}*** | **${mod.name}** | ${mod.description}`;
+    }
+    return output;
+}
 var listRolesets = rolesets => {
     var output = '';
     var sortedRolesets = _.sortBy(rolesets, set => set.roles.length);
@@ -422,7 +431,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.longMessage(message.channel.id, `Current list of available roles:${listRoles(roles)}`);
+            mafiabot.longMessage(message.channel.id, `Current list of available roles:${listRoles(roles)}\n\nAnd mods that can be applied to each role:${listMods(mods)}`);
         },
     },
     {
@@ -440,7 +449,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: (message, args) => {
-            const formatError = `That's the incorrect format!. To add a roleset, use the following format:\n\`${pre}addroleset [roleset id] | [faction1] [role1], [faction2] [role2], etc...\`\nex: *${pre}addroleset coolrolesetup | town vanilla, town insanecop, mafia roleblocker, independent serialkiller*`;
+            const formatError = `That's the incorrect format!. To add a roleset, use the following format:\n\`${pre}addroleset [roleset id] | [faction1] [mod1]+[role1], [faction2] [mod2]+[mod3]+[role2], etc...\`\nex: *${pre}addroleset coolrolesetup | town vanilla, town bp+miller+insanecop, mafia roleblocker, independent inno+serialkiller*`;
 
             var name = args[1];
             var rolelistText = message.content.split('|')[1];
@@ -454,9 +463,26 @@ var baseCommands = [
                     } else if (!_.every(rolelist, role => _.find(factions, {id: role[0]}))) {
                         var badFaction = _.find(rolelist, role => !_.find(factions, {id: role[0]}))[0];
                         error = `The faction *${badFaction}* is not a valid faction ID. Make sure to use the ID and not the full name. Use *${pre}factions* to see the list of available factions.`;
-                    } else if (!_.every(rolelist, role => _.find(roles, {id: role[1]}))) {
-                        var badRole = _.find(rolelist, role => !_.find(roles, {id: role[1]}))[1];
-                        error = `The role *${badRole}* is not a valid role ID. Make sure to use the ID and not the full name. Use *${pre}roles* to see the list of available roles.`;
+                    } else {
+                        for (var i = 0; i < rolelist.length; i++) {
+                            var splitRoles = rolelist[i][1].split('+');
+                            var baseRole = splitRoles.pop();
+                            if (!_.find(roles, {id: baseRole})) {
+                                if (mods[baseRole]) {
+                                    error = `The role *${baseRole}* is not a valid role ID, but it is a valid mod ID. Make sure that you always have a base role to attach mods to, and follow the mod format: \`[mod1]+[mod2]+[role]\`. Use *${pre}roles* to see the list of available roles and mods.`;
+                                } else {
+                                    error = `The role *${baseRole}* is not a valid role ID. Make sure to use the ID and not the full name. Use *${pre}roles* to see the list of available roles.`;
+                                }
+                            }
+                            var badMod = _.find(splitRoles, mod => !mods[mod]);
+                            if (badMod) {
+                                if (_.find(roles, {id: badMod})) {
+                                    error = `The mod *${badMod}* is not a valid mod ID, but it is a valid role ID. Make sure that you only use one base role at a time, and follow the mod format: \`[mod1]+[mod2]+[role]\`. Use *${pre}roles* to see the list of available roles and mods.`;
+                                } else {
+                                    error = `The mod *${badMod}* is not a valid mod ID. Make sure to use the ID and follow the mod format: \`[mod1]+[mod2]+[role]\`. Use *${pre}roles* to see the list of available roles and mods.`;
+                                }
+                            }
+                        }
                     }
                     if (!error) {
                         const rolesetHasher = rs => rs.reduce((acc, item) => {
