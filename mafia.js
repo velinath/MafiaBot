@@ -61,7 +61,7 @@ var timeLastSentSyncMessage = new Date();
 
 // utilities
 var roleCache = {};
-var getRole = mafiabot.getRole = (roleId) => {
+var getRole = mafiabot.getRole = roleId => {
     if (!roleCache[roleId]) {
         // combine role and mods
         var splitRoles = roleId.split('+').reverse(); // mod1+mod2+baserole => [baserole, mod1, mod2] ex: bp+miller+cop
@@ -301,12 +301,22 @@ var listVotes = (listOfVotes, channelId) => {
     return voteOutput;
 }
 var sendPlayerRoleInfo = player => {
-    mafiabot.sendMessage(player.id, `Your role is ***${getFaction(player.faction).name} ${getRole(player.role).name}***.\n${getRole(player.role).description}\n${getFaction(player.faction).description}`);
+    var modIds = player.role.split('+');
+    var baseRole = _.find(roles, {id: modIds.pop()});
+    var modList = modIds.map(mod => _.find(mods, {id: mod}));
+    var role = getRole(player.role);
+    var output = `Your role is ***${getFaction(player.faction).name} ${role.name}***`;
+    output += `\n    \`${getFaction(player.faction).name}\`: ${getFaction(player.faction).description}`;
+    output += `\n    \`${baseRole.name}\`: ${baseRole.description}`;
+    for (var i = 0; i < modList.length; i++) {
+        output += `\n    \`${modList[i].name}\`: ${modList[i].description}`;
+    }
+    mafiabot.sendMessage(player.id, output);
 }
 var printCurrentPlayers = (channelId, outputChannelId, printTrueRole) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
-        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by \`${_.find(mafiabot.users, {id: gameInChannel.hostId}).name}\`:`;
+        var output = `Currently ${s(gameInChannel.players.length, 'player')} in game hosted by \`${_.find(mafiabot.users, {id: gameInChannel.hostId})}\`:`;
         for (var i = 0; i < gameInChannel.players.length; i++) {
             var player = gameInChannel.players[i];
             output += `\n${i + 1}) `;
