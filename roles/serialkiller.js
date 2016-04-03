@@ -16,4 +16,4 @@ module.exports = ext(require('./tmpls/singleTarget.js'), {
             p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) + 1;
         }
     },
-}, require('./mods/miller.js'));
+}, require('./mods/miller.js').mod);

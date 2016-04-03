@@ -65,10 +65,11 @@ var getRole = mafiabot.getRole = (roleId) => {
     if (!roleCache[roleId]) {
         // combine role and mods
         var splitRoles = roleId.split('+').reverse(); // mod1+mod2+baserole => [baserole, mod1, mod2] ex: bp+miller+cop
-        var rolesAndMods = splitRoles.map((roleOrMod, i) => i == 0 ? _.find(roles, {id: roleOrMod}) : mods[roleOrMod]);
+        var rolesAndMods = splitRoles.map((roleOrMod, i) => i == 0 ? _.find(roles, {id: roleOrMod}) : _.find(mods, {id: roleOrMod}).mod);
         var role = ext(...rolesAndMods);
-        // modified role name
-        role.name = rolesAndMods.reverse().map(item => item.name).join(' ');
+        // modify role name
+        var splitRolesInOrder = roleId.split('+');
+        role.name = splitRolesInOrder.map((roleOrMod, i) => _.find((i == splitRolesInOrder.length - 1 ? roles : mods), {id: roleOrMod}).name).join(' ');
         // bind all functions to this specific role combination
         for (var prop in role) {
             if (typeof(role[prop]) === 'function') {
@@ -258,7 +259,7 @@ var listRoles = roles => {
 }
 var listMods = mods => {
     var output = '';
-    var sortedMods = _.sortBy(_.map(mods, (val, key) => _.assignIn({}, val, {id: key})), 'id');
+    var sortedMods = _.sortBy(mods, 'id');
     for (var i = 0; i < sortedMods.length; i++) {
         var mod = sortedMods[i];
         output += `\n***${mod.id}*** | **${mod.name}** | ${mod.description}`;
@@ -477,13 +478,13 @@ var baseCommands = [
                             var splitRoles = rolelist[i][1].split('+');
                             var baseRole = splitRoles.pop();
                             if (!_.find(roles, {id: baseRole})) {
-                                if (mods[baseRole]) {
+                                if (_.find(mods, {id: baseRole})) {
                                     error = `The role *${baseRole}* is not a valid role ID, but it is a valid mod ID. Make sure that you always have a base role to attach mods to, and follow the mod format: \`[mod1]+[mod2]+[role]\`. Use *${pre}roles* to see the list of available roles and mods.`;
                                 } else {
                                     error = `The role *${baseRole}* is not a valid role ID. Make sure to use the ID and not the full name. Use *${pre}roles* to see the list of available roles.`;
                                 }
                             }
-                            var badMod = _.find(splitRoles, mod => !mods[mod]);
+                            var badMod = _.find(splitRoles, mod => !_.find(mods, {id: mod}));
                             if (badMod) {
                                 if (_.find(roles, {id: badMod})) {
                                     error = `The mod *${badMod}* is not a valid mod ID, but it is a valid role ID. Make sure that you only use one base role at a time, and follow the mod format: \`[mod1]+[mod2]+[role]\`. Use *${pre}roles* to see the list of available roles and mods.`;
