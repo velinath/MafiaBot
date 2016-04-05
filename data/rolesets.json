@@ -1292,6 +1292,47 @@
 		]
 	},
 	{
+		"name": "megakiller9",
+		"roles": [
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "bp+vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "vigilante"
+			},
+			{
+				"faction": "town",
+				"role": "doctor"
+			},
+			{
+				"faction": "town",
+				"role": "cop"
+			},
+			{
+				"faction": "mafia",
+				"role": "vanilla"
+			},
+			{
+				"faction": "mafia",
+				"role": "assassin"
+			},
+			{
+				"faction": "independent",
+				"role": "serialkiller"
+			}
+		]
+	},
+	{
 		"name": "simple9",
 		"roles": [
 			{
@@ -1316,7 +1357,7 @@
 			},
 			{
 				"faction": "town",
-				"role": "vanilla"
+				"role": "cop"
 			},
 			{
 				"faction": "town",
@@ -1328,7 +1369,7 @@
 			},
 			{
 				"faction": "mafia",
-				"role": "vanilla"
+				"role": "assassin"
 			}
 		]
 	},
@@ -1718,7 +1759,7 @@
 		]
 	},
 	{
-		"name": "innokiller10",
+		"name": "blocked10",
 		"roles": [
 			{
 				"faction": "town",
@@ -1755,6 +1796,51 @@
 			{
 				"faction": "mafia",
 				"role": "vanilla"
+			},
+			{
+				"faction": "mafia",
+				"role": "roleblocker"
+			}
+		]
+	},
+	{
+		"name": "blockedkillers10",
+		"roles": [
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "tracker"
+			},
+			{
+				"faction": "town",
+				"role": "bomb"
+			},
+			{
+				"faction": "town",
+				"role": "bp+vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "doctor"
+			},
+			{
+				"faction": "mafia",
+				"role": "vanilla"
+			},
+			{
+				"faction": "mafia",
+				"role": "assassin"
 			},
 			{
 				"faction": "mafia",
@@ -2139,6 +2225,55 @@
 			{
 				"faction": "mafia",
 				"role": "vanilla"
+			},
+			{
+				"faction": "mafia",
+				"role": "roleblocker"
+			}
+		]
+	},
+	{
+		"name": "power11b",
+		"roles": [
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
+				"faction": "town",
+				"role": "cop"
+			},
+			{
+				"faction": "town",
+				"role": "vigilante"
+			},
+			{
+				"faction": "town",
+				"role": "doctor"
+			},
+			{
+				"faction": "town",
+				"role": "roleblocker"
+			},
+			{
+				"faction": "town",
+				"role": "tracker"
+			},
+			{
+				"faction": "mafia",
+				"role": "vanilla"
+			},
+			{
+				"faction": "mafia",
+				"role": "assassin"
 			},
 			{
 				"faction": "mafia",
