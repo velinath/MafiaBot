@@ -9,6 +9,7 @@ module.exports = ext(require('./tmpls/singleTarget.js'), {
     commandGerund: 'scanning',
     commandText: 'determine the innocence of a target',
     actionText: 'cop scan',
+    hasGun: true,
     onActionPhase: function(p) {
         var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (action) {

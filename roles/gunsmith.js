@@ -13,8 +13,8 @@ module.exports = ext(require('./tmpls/singleTarget.js'), {
         var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (action) {
             var target = _.find(p.game.players, {id: action.targetId});
-            var gunHavingRoles = ['cop', 'insanecop', 'naivecop', 'paranoidcop', 'detective', 'pgo', 'vigilante'];
-            var hasGun = target.faction === 'mafia' || gunHavingRoles.indexOf(target.role) >= 0;
+            var targetRole = p.mafiabot.getRole(target.role);
+            var hasGun = targetRole.hasGun != null ? targetRole.hasGun : target.faction === 'mafia';
             p.mafiabot.sendMessage(action.playerId, `You ${hasGun ? '**DID**' : 'did not'} find a gun on scanned player **<@${action.targetId}>**!`);
         }
     },

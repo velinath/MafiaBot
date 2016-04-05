@@ -10,6 +10,7 @@ module.exports = ext(require('./tmpls/singleTarget.js'), {
     commandGerund: 'killing',
     commandText: 'kill a target',
     actionText: 'vig kill',
+    hasGun: true,
     ammo: 1,
     onGameStart: function(p) {
         p.player.roleData.ammo = this.ammo;
