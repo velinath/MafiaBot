@@ -11,6 +11,7 @@ const ext = require('./lib/ext.js');
 
 const roles = require('./roles');
 const mods = require('./roles/mods');
+const variations = require('./roles/variations');
 const factions = require('./factions');
 const STATE = require('./lib/gameStates.js');
 const s = require('./lib/pluralize.js');
@@ -749,10 +750,17 @@ var baseCommands = [
                                     mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **${pre}confirm** in this channel to confirm your role.`);
                                     printCurrentPlayers(message.channel.id);
 
-                                    // pick a random available roleset and randomly assign the roles
+                                    // pick a random available roleset
                                     var roleset = possibleRolesets[Math.floor(Math.random()*possibleRolesets.length)];
+                                    // mutate it
+                                    for (var i = 0; i < variations.length; i++) {
+                                        if (variations.canMutate(roleset, variations[i]) && Math.random() < 0.25) {
+                                            roleset = variations.mutate(roleset, variations[i]);
+                                        }
+                                    }
                                     gameInChannel.roleset = roleset.name;
                                     console.log('Picking roleset:', roleset.name);
+                                    // randomly assign the roles
                                     var shuffledRoles = _.shuffle(roleset.roles);
                                     for (var i = 0; i < gameInChannel.players.length; i++) {
                                         var player = gameInChannel.players[i];
