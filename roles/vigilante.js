@@ -22,7 +22,7 @@ module.exports = ext(require('./tmpls/singleTarget.js'), {
         var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (action) {
             p.player.roleData.ammo--;
-            p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) + 1;
+            p.game.nightKills[action.targetId] = (p.game.nightKills[action.targetId] || 0) + bulletKill;
         }
     },
 });

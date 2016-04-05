@@ -1,6 +1,7 @@
 "use strict";
 //global
 global.pre = '--'; // command prefix that can be used across all files
+global.bulletKill = 0.314; // sentinel number for differentiating bullet kills from other kills
 
 // requires
 const fs = require('fs');
@@ -1153,7 +1154,7 @@ var mainLoop = function() {
                 // just do the mafia kill action here, why not
                 var mafiaAction = _.find(game.nightActions, {action: 'mafia kill'});
                 if (mafiaAction) {
-                    game.nightKills[mafiaAction.targetId] = (game.nightKills[mafiaAction.targetId] || 0) + 1;
+                    game.nightKills[mafiaAction.targetId] = (game.nightKills[mafiaAction.targetId] || 0) + bulletKill;
                 }
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];
@@ -1164,9 +1165,12 @@ var mainLoop = function() {
                 for (var playerId in game.nightKills) {
                     if (game.nightKills[playerId] > 0) {
                         var deadPlayer = _.find(game.players, {id: playerId});
-                        deadPlayer.alive = false;
-                        deadPlayer.deathReason = 'Died N' + game.day;
-                        deadPlayers.push(deadPlayer);
+                        var bulletproofBlocked = game.nightKills[playerId] % bulletKill === 0 && getRole(deadPlayer.role).bulletproof;
+                        if (!bulletproofBlocked) {
+                            deadPlayer.alive = false;
+                            deadPlayer.deathReason = 'Died N' + game.day;
+                            deadPlayers.push(deadPlayer);
+                        }
                     }
                 }
                 // start day
