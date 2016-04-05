@@ -27,5 +27,9 @@ Install [Node Inspector](https://github.com/node-inspector/node-inspector), then
 $ node-debug --nodejs --harmony_rest_parameters mafia-debug.js
 ```
 
+## Credits
+Tombolo: Role setup contributions  
+Everything else: foolmoron  
+
 ## Shout Out
 To Quick-Man for being the winner of the first ever real game of mafia coordinated by MafiaBot!
