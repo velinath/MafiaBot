@@ -408,39 +408,6 @@
 		]
 	},
 	{
-		"name": "bomb7",
-		"roles": [
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "bomb"
-			},
-			{
-				"faction": "town",
-				"role": "doctor"
-			},
-			{
-				"faction": "town",
-				"role": "cop"
-			},
-			{
-				"faction": "mafia",
-				"role": "vanilla"
-			},
-			{
-				"faction": "mafia",
-				"role": "roleblocker"
-			}
-		]
-	},
-	{
 		"name": "simple7",
 		"roles": [
 			{
@@ -462,39 +429,6 @@
 			{
 				"faction": "town",
 				"role": "vanilla"
-			},
-			{
-				"faction": "mafia",
-				"role": "vanilla"
-			},
-			{
-				"faction": "mafia",
-				"role": "vanilla"
-			}
-		]
-	},
-	{
-		"name": "bomb7b",
-		"roles": [
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "bomb"
 			},
 			{
 				"faction": "mafia",
@@ -573,7 +507,7 @@
 		]
 	},
 	{
-		"name": "millerbomb7",
+		"name": "miller7",
 		"roles": [
 			{
 				"faction": "town",
@@ -593,7 +527,7 @@
 			},
 			{
 				"faction": "town",
-				"role": "bomb"
+				"role": "doctor"
 			},
 			{
 				"faction": "mafia",
@@ -725,7 +659,7 @@
 			},
 			{
 				"faction": "town",
-				"role": "bomb"
+				"role": "miller"
 			},
 			{
 				"faction": "town",
