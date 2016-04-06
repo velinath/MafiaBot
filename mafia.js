@@ -402,6 +402,15 @@ var baseCommands = [
         },
     },
     {
+        commands: ['credits'],
+        description: 'Show credits for MafiaBot',
+        adminOnly: false,
+        activatedOnly: false,
+        onMessage: message => {
+            mafiabot.sendMessage(message.channel.id, `I was designed and developed entirely by <@88020438474567680>!\nMany role setups by Tom Bombadil\nSource code: https://github.com/foolmoron/mafiabot`);
+        },
+    },
+    {
         commands: ['reboot'],
         description: 'Reboots MafiaBot on the server',
         adminOnly: true,
