@@ -805,7 +805,7 @@ var baseCommands = [
                                                 for (var i = 0; i < mafiaPlayers.length; i++) {
                                                     var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
                                                     mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2) => {
-                                                        console.log('errorMafia2', errorMafia2);
+                                                        console.log('errorMafia2', mafiaPlayer.name, errorMafia2);
                                                     });
                                                     mafiabot.sendMessage(mafiaPlayer, `Use the channel <#${mafiaChannel.id}> to chat with your fellow Mafia team members, and to send in your nightly kill.`);
                                                 }
@@ -819,7 +819,8 @@ var baseCommands = [
                                     }
                                     trySetupMafiaChannel();
                                     // then send roles
-                                    for (var i = 0; i < gameInChannel.players.length; i++) {                                    
+                                    for (var i = 0; i < gameInChannel.players.length; i++) {
+                                        var player = gameInChannel.players[i];
                                         sendPlayerRoleInfo(player);
                                         mafiabot.sendMessage(player.id, `Type **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                                     }
