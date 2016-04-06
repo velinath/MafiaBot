@@ -799,7 +799,19 @@ var baseCommands = [
                                         mafiabot.overwritePermissions(mafiaChannel, mafiabot.user, { managePermissions: true }, (error) => {
                                             if (!error) {
                                                 mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false }, (errorMafia1) => {
-                                                    console.log('errorMafia1', errorMafia1);
+                                                    console.log('errorMafia1a', errorMafia1);
+                                                    mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false }, (errorMafia1) => {
+                                                        console.log('errorMafia1b', errorMafia1);
+                                                        mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false }, (errorMafia1) => {
+                                                            console.log('errorMafia1c', errorMafia1);
+                                                            mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false }, (errorMafia1) => {
+                                                                console.log('errorMafia1d', errorMafia1);
+                                                                mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false }, (errorMafia1) => {
+                                                                    console.log('errorMafia1e', errorMafia1);
+                                                                });
+                                                            });
+                                                        });
+                                                    });
                                                 });
                                                 // and mafia messages
                                                 for (var i = 0; i < mafiaPlayers.length; i++) {
