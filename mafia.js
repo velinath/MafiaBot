@@ -742,7 +742,7 @@ var baseCommands = [
                         if (votesRemaining <= 0) {
                             endGame('A majority vote of the players');
                         } else {
-                            mafiabot.sendMessage(message.channel, `There are currently ${s(gameInChannel.votesToEndGame.length, 'vote')} to end the current game hosted by <@${gameInChannel.hostId}>. ${s(votesRemaining, 'vote')} remaining!`);
+                            mafiabot.sendMessage(message.channel, `There ${s(gameInChannel.votesToEndGame.length, '', 'are', 'is')} currently ${s(gameInChannel.votesToEndGame.length, 'vote')} to end the current game hosted by <@${gameInChannel.hostId}>. ${s(votesRemaining, 'vote')} remaining!`);
                         }
                     }
                 } else {
