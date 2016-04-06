@@ -803,7 +803,7 @@ var baseCommands = [
                                                 });
                                                 // and mafia messages
                                                 for (var i = 0; i < mafiaPlayers.length; i++) {
-                                                    var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
+                                                    let mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
                                                     mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2) => {
                                                         console.log('errorMafia2', mafiaPlayer.name, errorMafia2);
                                                     });
