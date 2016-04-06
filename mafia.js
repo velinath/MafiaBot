@@ -958,8 +958,8 @@ var baseCommands = [
                     if (target) {
                         if (!target.alive) {
                             mafiabot.reply(message, `You can't vote for the dead player ${args[1]}!`);
-                        // } else if (target.id == message.author.id) {
-                        //     mafiabot.reply(message, `You can't vote for yourself!`);
+                        } else if (target.id == message.author.id) {
+                            mafiabot.reply(message, `You can't vote for yourself!`);
                         } else {
                             _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                             gameInChannel.votes.push({playerId: message.author.id, targetId: target.id, time: new Date()});
