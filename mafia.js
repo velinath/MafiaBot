@@ -585,7 +585,7 @@ var baseCommands = [
         },
     },
     {
-        commands: ['player', 'players'],
+        commands: ['player', 'players', 'playerlist'],
         description: 'Show current list of players of game in channel',
         adminOnly: false,
         activatedOnly: true,
@@ -652,7 +652,9 @@ var baseCommands = [
                         var voteHistory = gameInChannel.voteHistory[i];
                         output += `***Day ${voteHistory.day}:*** `;
                         output += listVotes(voteHistory.votes, message.channel.id);
-                        output += `\n\n`;
+                        if (i != gameInChannel.voteHistory.length - 1) {
+                            output += `\n\n`;
+                        }
                     }
                     mafiabot.sendMessage(message.channel.id, output);
                 } else {
