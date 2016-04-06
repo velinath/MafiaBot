@@ -179,7 +179,19 @@ Use the ***${pre}noaction*** command to confirm that you are active but taking n
                     // block night talking
                     var gameChannel = _.find(mafiabot.channels, {id: channelId});
                     var everyoneId = _.find(gameChannel.server.roles, {name: "@everyone"}).id;
-                    mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: false });
+                    var tryBlockNightTalking = function() {
+                        mafiabot.overwritePermissions(gameChannel, mafiabot.user, { managePermissions: true }, (error) => {
+                            if (!error) {
+                                mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: false, managePermissions: false }, (errorSilence2) => {
+                                    console.log('errorSilence2', errorSilence2);
+                                });
+                            } else {
+                                console.log('retry', 'nighttalking');
+                                tryBlockNightTalking();
+                            }
+                        });
+                    }
+                    tryBlockNightTalking();
                 }
                 return true;
             }
@@ -779,22 +791,38 @@ var baseCommands = [
                                         player.faction = shuffledRoles[i].faction;
                                         player.role = shuffledRoles[i].role;
                                         console.log('    ', player.name, player.faction, player.role);
+                                    }
+                                    // do permissions stuff first before the network is clogged
+                                    var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
+                                    var mafiaPlayers = _.filter(gameInChannel.players, {faction: 'mafia'});
+                                    var trySetupMafiaChannel = function() {
+                                        mafiabot.overwritePermissions(mafiaChannel, mafiabot.user, { managePermissions: true }, (error) => {
+                                            if (!error) {
+                                                mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false }, (errorMafia1) => {
+                                                    console.log('errorMafia1', errorMafia1);
+                                                });
+                                                // and mafia messages
+                                                for (var i = 0; i < mafiaPlayers.length; i++) {
+                                                    var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
+                                                    mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2) => {
+                                                        console.log('errorMafia2', errorMafia2);
+                                                    });
+                                                    mafiabot.sendMessage(mafiaPlayer, `Use the channel <#${mafiaChannel.id}> to chat with your fellow Mafia team members, and to send in your nightly kill.`);
+                                                }
+                                                mafiabot.syncMessage(mafiaChannel.id, `**Welcome to the mafia team!**\nYour team is:${listUsers(_.map(mafiaPlayers, 'id'))}`);
+                                                mafiabot.syncMessage(mafiaChannel.id, `As a team you have **1 kill each night**. Use the ***${pre}kill*** command (ex: *${pre}kill fool*) to use that ability when I prompt you in this chat.`);
+                                            } else {
+                                                console.log('retry', 'mafiasetup');
+                                                trySetupMafiaChannel();
+                                            }
+                                        });
+                                    }
+                                    trySetupMafiaChannel();
+                                    // then send roles
+                                    for (var i = 0; i < gameInChannel.players.length; i++) {                                    
                                         sendPlayerRoleInfo(player);
                                         mafiabot.sendMessage(player.id, `Type **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
                                     }
-
-                                    var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
-                                    var mafiaPlayers = _.filter(gameInChannel.players, {faction: 'mafia'});
-                                    mafiabot.overwritePermissions(mafiaChannel, mafiabot.user, { managePermissions: true }).then(function() {
-                                        mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false });
-                                    });
-                                    for (var i = 0; i < mafiaPlayers.length; i++) {
-                                        var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
-                                        mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true });
-                                        mafiabot.sendMessage(mafiaPlayer, `Use the channel <#${mafiaChannel.id}> to chat with your fellow Mafia team members, and to send in your nightly kill.`);
-                                    }
-                                    mafiabot.syncMessage(mafiaChannel.id, `**Welcome to the mafia team!**\nYour team is:${listUsers(_.map(mafiaPlayers, 'id'))}`);
-                                    mafiabot.syncMessage(mafiaChannel.id, `As a team you have **1 kill each night**. Use the ***${pre}kill*** command (ex: *${pre}kill fool*) to use that ability when I prompt you in this chat.`);
                                 }
                             });
                         } else {

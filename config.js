@@ -3,7 +3,7 @@ const _ = require('lodash');
 var overrides = {};
 if (global.DEBUG) {
     overrides = {
-    confirmingReminderInterval: 5*1000,
+        confirmingReminderInterval: 1000*1000,
         nightActionReminderInterval: 15*1000,
         nightActionBufferTime: 1*1000,
     };
