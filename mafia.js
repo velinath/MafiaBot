@@ -223,8 +223,13 @@ var checkForGameOver = channelId => {
             printCurrentPlayersWithTrueRole(channelId);
             
             var mafiaChannel = _.find(mafiabot.channels, {id: gameInChannel.mafiaChannelId});
-            var everyoneId = _.find(mafiaChannel.server.roles, {name: "@everyone"}).id;
-            mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: true, sendMessages: true });
+            // open mafia channel to all players
+            for (var i = 0; i < gameInChannel.players.length; i++) {
+                let player = _.find(mafiabot.users, {id: gameInChannel.players[i].id});
+                mafiabot.overwritePermissions(mafiaChannel, player, { readMessages: true, sendMessages: true }, (errorOpenMafia1) => {
+                    console.log('errorOpenMafia1', player.name, errorOpenMafia1);
+                });
+            }
             mafiabot.sendMessage(mafiaChannel.id, `**The game is over so this chat has been revealed to everyone. This is intentional! Use --endgame in the main chat to delete this room forever.`);
             mafiabot.syncMessage(channelId, 
 `The roleset used was called: \`${gameInChannel.roleset}\`
