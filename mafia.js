@@ -822,8 +822,20 @@ var baseCommands = [
                                                 // and mafia messages
                                                 for (var i = 0; i < mafiaPlayers.length; i++) {
                                                     let mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
-                                                    mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2) => {
-                                                        console.log('errorMafia2', mafiaPlayer.name, errorMafia2);
+                                                    mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2a) => {
+                                                        console.log('errorMafia2a', mafiaPlayer.name, errorMafia2a);
+                                                        mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2b) => {
+                                                            console.log('errorMafia2b', mafiaPlayer.name, errorMafia2b);
+                                                            mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2c) => {
+                                                                console.log('errorMafia2c', mafiaPlayer.name, errorMafia2c);
+                                                                mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2d) => {
+                                                                    console.log('errorMafia2d', mafiaPlayer.name, errorMafia2d);
+                                                                    mafiabot.overwritePermissions(mafiaChannel, mafiaPlayer, { readMessages: true, sendMessages: true }, (errorMafia2e) => {
+                                                                        console.log('errorMafia2e', mafiaPlayer.name, errorMafia2e);
+                                                                    });
+                                                                });
+                                                            });
+                                                        });
                                                     });
                                                     mafiabot.sendMessage(mafiaPlayer, `Use the channel <#${mafiaChannel.id}> to chat with your fellow Mafia team members, and to send in your nightly kill.`);
                                                 }
