@@ -28,6 +28,7 @@ var saveData = (data) => {
 var data = _.merge({
     syncMessages: [],
     channelsActivated: [],
+    signals: [],
     pmChannels: [],
     games: [],
 }, getData());
@@ -442,12 +443,69 @@ var baseCommands = [
         },
     },
     {
-        commands: ['factions'],
-        description: 'Show all available factions',
+        commands: ['deactivatemafia'],
+        description: 'Deactivate MafiaBot on this channel',
+        adminOnly: true,
+        activatedOnly: false,
+        onMessage: message => {
+            if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
+                data.channelsActivated.splice(data.channelsActivated.indexOf(message.channel.id), 1);
+                mafiabot.reply(message, `MafiaBot has been deactivated in *<#${message.channel.id}>*!`);
+            } else {
+                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *${pre}activatemafia* to activate MafiaBot on this channel.`);
+            }
+        },
+    },
+    {
+        commands: ['signal', 'letsplay'],
+        description: `Let people know that you want to play some mafia. Pings everyone players who joined the signal group with *${pre}joinsignal*.`,
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.reply(message, `Here the list of available factions:${listFactions(factions)}`);
+            var signalsForChannel = _.find(data.signals, {channelId: message.channel.id});
+            if (signalsForChannel && signalsForChannel.playerIds.length) {
+                mafiabot.sendMessage(message.channel.id, `**HEY! Let's play some MAFIA!** (use the *${pre}joinsignal* command to join this list)\n${signalsForChannel.playerIds.map((id) => `<@${id}>`).join(' ')}`);
+            } else {
+                mafiabot.reply(message, `There's no one in the signal group for channel <#${message.channel.id}>! Use the *${pre}joinsignal* command to join it.`);
+            }
+        },
+    },
+    {
+        commands: ['joinsignal'],
+        description: `Join the signal group so you are pinged to play anytime someone uses the *${pre}signal* command.`,
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var signalsForChannel = _.find(data.signals, {channelId: message.channel.id});
+            if (!signalsForChannel) {
+                signalsForChannel = {
+                    channelId: message.channel.id,
+                    playerIds: [],
+                }
+                data.signals.push(signalsForChannel);
+            }
+            signalsForChannel.playerIds.push(message.author.id);
+            mafiabot.reply(message, `You have been added to the mafia signal for channel <#${message.channel.id}>! Use the *${pre}signal* command to ping everyone in the signal group.`);
+        },
+    },
+    {
+        commands: ['leavesignal'],
+        description: `Leave the signal group so you don't get pinged to play anymore.`,
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var signalsForChannel = _.find(data.signals, {channelId: message.channel.id});
+            if (signalsForChannel) {
+                var prevLength = signalsForChannel.playerIds.length;
+                _.pull(signalsForChannel.playerIds, message.author.id);
+                if (signalsForChannel.playerIds.length != prevLength) {
+                    mafiabot.reply(message, `You have been removed from the mafia signal for channel <#${message.channel.id}>!`);
+                } else {
+                    mafiabot.reply(message, `You're not even in the signal group for channel <#${message.channel.id}>!`);
+                }
+            } else {
+                mafiabot.reply(message, `There's no one in the signal group for channel <#${message.channel.id}>! Use the *${pre}joinsignal* command to join it.`);
+            }
         },
     },
     {
