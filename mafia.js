@@ -443,20 +443,6 @@ var baseCommands = [
         },
     },
     {
-        commands: ['deactivatemafia'],
-        description: 'Deactivate MafiaBot on this channel',
-        adminOnly: true,
-        activatedOnly: false,
-        onMessage: message => {
-            if (data.channelsActivated.indexOf(message.channel.id) >= 0) {
-                data.channelsActivated.splice(data.channelsActivated.indexOf(message.channel.id), 1);
-                mafiabot.reply(message, `MafiaBot has been deactivated in *<#${message.channel.id}>*!`);
-            } else {
-                mafiabot.reply(message, `MafiaBot is not activate in *<#${message.channel.id}>*! Use *${pre}activatemafia* to activate MafiaBot on this channel.`);
-            }
-        },
-    },
-    {
         commands: ['signal', 'letsplay'],
         description: `Let people know that you want to play some mafia. Pings everyone players who joined the signal group with *${pre}joinsignal*.`,
         adminOnly: false,
