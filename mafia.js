@@ -47,7 +47,7 @@ mafiabot.syncReply = (message, content, delay) => {
     mafiabot.syncMessage(message.channel.id, message.author + ', ' + content, delay);
 };
 mafiabot.longMessage = (channelId, content) => {
-    const linesPerMessage = 15;
+    const linesPerMessage = 10;
     var lines = content.split('\n');
     var output = '';
     for (var i = 0; i < lines.length; i++) {
