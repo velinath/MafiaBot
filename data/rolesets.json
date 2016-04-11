@@ -60,56 +60,6 @@
 		]
 	},
 	{
-		"name": "power5",
-		"roles": [
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "cop"
-			},
-			{
-				"faction": "mafia",
-				"role": "roleblocker"
-			}
-		]
-	},
-	{
-		"name": "simple5",
-		"roles": [
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "mafia",
-				"role": "vanilla"
-			}
-		]
-	},
-	{
 		"name": "dethy",
 		"roles": [
 			{
@@ -127,31 +77,6 @@
 			{
 				"faction": "town",
 				"role": "paranoidcop"
-			},
-			{
-				"faction": "mafia",
-				"role": "vanilla"
-			}
-		]
-	},
-	{
-		"name": "Pentakill",
-		"roles": [
-			{
-				"faction": "town",
-				"role": "cop"
-			},
-			{
-				"faction": "town",
-				"role": "miller"
-			},
-			{
-				"faction": "town",
-				"role": "vanilla"
-			},
-			{
-				"faction": "independent",
-				"role": "prostitute"
 			},
 			{
 				"faction": "mafia",
@@ -511,7 +436,7 @@
 		"roles": [
 			{
 				"faction": "town",
-				"role": "vanilla"
+				"role": "detective"
 			},
 			{
 				"faction": "town",
@@ -1447,11 +1372,11 @@
 			},
 			{
 				"faction": "town",
-				"role": "miller"
+				"role": "bomb"
 			},
 			{
 				"faction": "town",
-				"role": "bomb"
+				"role": "vanilla"
 			},
 			{
 				"faction": "town",
