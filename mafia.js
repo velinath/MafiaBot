@@ -36,31 +36,56 @@ saveData(data);
 var mafiabot = new Discord.Client();
 
 // synchronous messages
-mafiabot.syncMessage = (channelId, content, delay) => {
-    data.syncMessages.push({
+mafiabot.syncMessage = (channelId, content, delay, unshift) => {
+    var record = {
         channelId: channelId,
         content: content,
         delay: parseInt(delay) || 0,
-    });
+    };
+    if (unshift) {
+        data.syncMessages.unshift(record);
+    } else {
+        data.syncMessages.push(record);
+    }
 };
 mafiabot.syncReply = (message, content, delay) => {
     mafiabot.syncMessage(message.channel.id, message.author + ', ' + content, delay);
 };
-mafiabot.longMessage = (channelId, content) => {
-    const linesPerMessage = 10;
-    var lines = content.split('\n');
-    var output = '';
-    for (var i = 0; i < lines.length; i++) {
-        output += lines[i] + '\n';
-        if (i % linesPerMessage === linesPerMessage - 1 && i !== lines.length - 1) {
-            mafiabot.syncMessage(channelId, output);
-            output = ``;
-        }
-    }
-    mafiabot.syncMessage(channelId, output);
-}
 var readyToSendSyncMessage = true;
 var timeLastSentSyncMessage = new Date();
+
+// wrap basic send message functions to split long messages automatically
+mafiabot.originalSendMessage = mafiabot.sendMessage;
+mafiabot.originalReply = mafiabot.reply;
+mafiabot.sendMessage = (channelId, content) => {
+    const MAX_CHARS = 1900;
+    var lines = content.split('\n');
+    var output = ``;
+    var messages = [];
+    for (var i = 0; i < lines.length; i++) {
+        if ((output.length + (lines[i] || '').length) >= MAX_CHARS) {
+            messages.push(output);
+            output = ``;            
+        }
+        output += lines[i];
+        if (i !== lines.length - 1) {
+            output += '\n';
+        }
+    }
+    messages.push(output);
+
+    if (messages.length == 1) {
+        mafiabot.originalSendMessage(channelId, messages[0]);
+    } else {
+        // loop through messages backwards and unshift them on the sync message queue so the messages stay together
+        for (var i = messages.length - 1; i >= 0; i--) {
+            mafiabot.syncMessage(channelId, messages[i], 0, true);
+        }
+    }
+};
+mafiabot.reply = (channelId, content) => {
+    mafiabot.sendMessage(message.channel.id, message.author + ', ' + content, delay);
+};
 
 // utilities
 var roleCache = {};
@@ -381,7 +406,7 @@ var baseCommands = [
                 var comm = baseCommands[i];
                 output += `\n**${pre}${comm.commands.join('/')}** - ${comm.description}${comm.adminOnly ? ' - *Admin Only*' : ''}${comm.activatedOnly ? ' - *Activated Channel Only*' : ''}`;
             }
-            mafiabot.longMessage(message.channel.id, output);
+            mafiabot.sendMessage(message.channel.id, output);
         },
     },
     {
@@ -505,7 +530,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.longMessage(message.channel.id, `Current list of available roles:${listRoles(roles)}\n\nAnd mods that can be applied to each role:${listMods(mods)}`);
+            mafiabot.sendMessage(message.channel.id, `Current list of available roles:${listRoles(roles)}\n\nAnd mods that can be applied to each role:${listMods(mods)}`);
         },
     },
     {
@@ -514,7 +539,7 @@ var baseCommands = [
         adminOnly: true,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.longMessage(message.channel.id, `Current list of available rolesets:${listRolesets(getRolesets())}`);
+            mafiabot.sendMessage(message.channel.id, `Current list of available rolesets:${listRolesets(getRolesets())}`);
         },
     },
     {
