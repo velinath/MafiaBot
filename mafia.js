@@ -207,7 +207,7 @@ var checkForGameOver = channelId => {
             printCurrentPlayersWithTrueRole(channelId);
             
             var mafiaChannel = _.find(mafiabot.channels, {id: gameInChannel.mafiaChannelId});
-            mafiabot.sendMessage(mafiaChannel.id, `**The game is over so this chat has been revealed to everyone. This is intentional! Use --endgame in the main chat to delete this room forever.`);
+            mafiabot.sendMessage(mafiaChannel.id, `**The game is over so this chat has been revealed to everyone. This is intentional!** Use --endgame in the main chat to delete this room forever.`);
             mafiabot.syncMessage(channelId, 
 `The roleset used was called: \`${gameInChannel.roleset}\`
 
