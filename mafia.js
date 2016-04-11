@@ -470,8 +470,13 @@ var baseCommands = [
                 }
                 data.signals.push(signalsForChannel);
             }
-            signalsForChannel.playerIds.push(message.author.id);
-            mafiabot.reply(message, `You have been added to the mafia signal for channel <#${message.channel.id}>! Use the *${pre}signal* command to ping everyone in the signal group.`);
+            var prevLength = signalsForChannel.playerIds.length;
+            signalsForChannel.playerIds = _.uniq(signalsForChannel.playerIds.concat(message.author.id));
+            if (signalsForChannel.playerIds.length != prevLength) {
+                mafiabot.reply(message, `You have been added to the mafia signal for channel <#${message.channel.id}>! Use the *${pre}signal* command to ping everyone in the signal group.`);
+            } else {
+                mafiabot.reply(message, `You're already in the signal group for channel <#${message.channel.id}>!`);
+            }
         },
     },
     {
