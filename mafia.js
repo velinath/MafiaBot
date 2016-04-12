@@ -57,7 +57,7 @@ var timeLastSentSyncMessage = new Date();
 // wrap basic send message functions to split long messages automatically
 mafiabot.originalSendMessage = mafiabot.sendMessage;
 mafiabot.originalReply = mafiabot.reply;
-mafiabot.sendMessage = (channelId, content) => {
+mafiabot.sendMessage = (channelId, content, options, callback) => {
     const MAX_CHARS = 1900;
     var lines = content.split('\n');
     var output = ``;
@@ -75,11 +75,15 @@ mafiabot.sendMessage = (channelId, content) => {
     messages.push(output);
 
     if (messages.length == 1) {
-        mafiabot.originalSendMessage(channelId, messages[0]);
+        mafiabot.originalSendMessage(channelId, messages[0], options, callback);
     } else {
         // loop through messages backwards and unshift them on the sync message queue so the messages stay together
         for (var i = messages.length - 1; i >= 0; i--) {
             mafiabot.syncMessage(channelId, messages[i], 0, true);
+        }
+        // call the callback because why not
+        if (typeof(callback) === 'function') {
+            callback();
         }
     }
 };
@@ -1170,7 +1174,9 @@ var mainLoop = function() {
         data.syncMessages[0].delay -= dt;
         if (readyToSendSyncMessage && data.syncMessages[0].delay <= 0) {
             var message = data.syncMessages.shift();
-            mafiabot.sendMessage(message.channelId, message.content, {tts: false}, () => { readyToSendSyncMessage = true; });
+            mafiabot.sendMessage(message.channelId, message.content, {tts: false}, () => { 
+                readyToSendSyncMessage = true; 
+            });
 
             readyToSendSyncMessage = false;
             timeLastSentSyncMessage = new Date();
