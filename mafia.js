@@ -236,11 +236,11 @@ var checkForGameOver = channelId => {
             printCurrentPlayersWithTrueRole(channelId);
             
             var mafiaChannel = _.find(mafiabot.channels, {id: gameInChannel.mafiaChannelId});
-            mafiabot.sendMessage(mafiaChannel.id, `**The game is over so this chat has been revealed to everyone. This is intentional!** Use --endgame in the main chat to delete this room forever.`);
+            mafiabot.sendMessage(mafiaChannel.id, `**The game is over so this chat has been revealed to everyone. This is intentional!** Use *${pre}endgame* in the main chat to delete this room forever.`);
             mafiabot.syncMessage(channelId, 
 `The roleset used was called: \`${gameInChannel.roleset}\`
 
-⚠️ **Use the *--feedback* command to report any bad role setups and to send any other comments/suggestions/bugs to the server!** ⚠️
+⚠️ **Use the *${pre}feedback* command to report any bad role setups and to send any other comments/suggestions/bugs to the server!** ⚠️
 
 Mafia chat is now open to all players!
 **Use the *${pre}endgame* command to end the game (and delete the mafia chat forever) so you can start a new game!**`);
@@ -299,6 +299,15 @@ var listRolesets = rolesets => {
         var roleset = sortedRolesets[i];
         var formattedRoles = _.map(roleset.roles, role => `\`${getFaction(role.faction).name} ${getRole(role.role).trueName || getRole(role.role).name}\``).join(', ');
         output += `\n***${roleset.name}* (${roleset.roles.length})** | ${formattedRoles}`;
+    }
+    return output;
+}
+var listRolesetNames = rolesets => {
+    var output = '';
+    var rolesetGroups = _.sortBy(_.toArray(_.groupBy(rolesets, set => set.roles.length)), group => group[0].roles.length);
+    for (var i = 0; i < rolesetGroups.length; i++) {
+        var rolesetGroup = rolesetGroups[i];
+        output += `\n**${s(rolesetGroup[0].roles.length, 'player')}:** \`${_.map(rolesetGroup, set => set.name).join(', ')}\``;
     }
     return output;
 }
@@ -440,7 +449,7 @@ var baseCommands = [
         adminOnly: true,
         activatedOnly: false,
         onMessage: message => {
-            throw new Error(`Rebooting MafiaBot due to admin ${message.author.name}'s --reboot command!`);
+            throw new Error(`Rebooting MafiaBot due to admin ${message.author.name}'s ${pre}reboot command!`);
         },
     },
     {
@@ -539,11 +548,11 @@ var baseCommands = [
     },
     {
         commands: ['rolesets'],
-        description: 'Show all available role sets',
-        adminOnly: true,
+        description: `Show all available role sets names for you to choose with *${pre}startgame*`,
+        adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            mafiabot.sendMessage(message.channel.id, `Current list of available rolesets:${listRolesets(getRolesets())}`);
+            mafiabot.sendMessage(message.channel.id, `Current list of available rolesets for use with *${pre}startgame*:${listRolesetNames(getRolesets())}`);
         },
     },
     {
@@ -817,10 +826,10 @@ var baseCommands = [
     },
     {
         commands: ['startgame'],
-        description: 'Current host can start game with current list of players',
+        description: 'Host can start game with current list of players, optionally specifying the name of a roleset to use.',
         adminOnly: false,
         activatedOnly: true,
-        onMessage: message => {
+        onMessage: (message, args) => {
             var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel) {
                 if (gameInChannel.hostId == message.author.id) {
@@ -828,47 +837,55 @@ var baseCommands = [
                         // see if there are any available rolesets for this number of players
                         var possibleRolesets = _.filter(getRolesets(), set => set.roles.length == gameInChannel.players.length);
                         if (possibleRolesets.length) {
-                            mafiabot.createChannel(message.channel, 'mafia' + Math.random().toString().substring(2), 'text', (error, mafiaChannel) => {
-                                if (mafiaChannel) {
-                                    gameInChannel.state = STATE.CONFIRMING;
-                                    gameInChannel.mafiaChannelId = mafiaChannel.id;
-                                    gameInChannel.confirmingReminderTime = config.confirmingReminderInterval;
-                                    mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **${pre}confirm** in this channel to confirm your role.`);
-                                    printCurrentPlayers(message.channel.id);
+                            // if there was a roleset passed in, use that
+                            if (args[1]) {
+                                possibleRolesets = _.filter(possibleRolesets, set => set.name === args[1]);
+                            }
+                            if (possibleRolesets.length) {
+                                mafiabot.createChannel(message.channel, 'mafia' + Math.random().toString().substring(2), 'text', (error, mafiaChannel) => {
+                                    if (mafiaChannel) {
+                                        gameInChannel.state = STATE.CONFIRMING;
+                                        gameInChannel.mafiaChannelId = mafiaChannel.id;
+                                        gameInChannel.confirmingReminderTime = config.confirmingReminderInterval;
+                                        mafiabot.syncMessage(message.channel.id, `Sending out roles for game of mafia hosted by <@${gameInChannel.hostId}>! Check your PMs for info and type **${pre}confirm** in this channel to confirm your role.`);
+                                        printCurrentPlayers(message.channel.id);
 
-                                    // pick a random available roleset
-                                    var roleset = possibleRolesets[Math.floor(Math.random()*possibleRolesets.length)];
-                                    // mutate it
-                                    for (var i = 0; i < variations.length; i++) {
-                                        if (variations.canMutate(roleset, variations[i]) && Math.random() < 0.25) {
-                                            roleset = variations.mutate(roleset, variations[i]);
+                                        // pick a random available roleset
+                                        var roleset = possibleRolesets[Math.floor(Math.random()*possibleRolesets.length)];
+                                        // mutate it
+                                        for (var i = 0; i < variations.length; i++) {
+                                            if (variations.canMutate(roleset, variations[i]) && Math.random() < 0.25) {
+                                                roleset = variations.mutate(roleset, variations[i]);
+                                            }
                                         }
+                                        gameInChannel.roleset = roleset.name;
+                                        console.log('Picking roleset:', roleset.name);
+                                        // randomly assign and send roles
+                                        var shuffledRoles = _.shuffle(roleset.roles);
+                                        for (var i = 0; i < gameInChannel.players.length; i++) {
+                                            var player = gameInChannel.players[i];
+                                            player.faction = shuffledRoles[i].faction;
+                                            player.role = shuffledRoles[i].role;
+                                            console.log('    ', player.name, player.faction, player.role);
+                                        }
+                                        for (var i = 0; i < gameInChannel.players.length; i++) {
+                                            var player = gameInChannel.players[i];
+                                            sendPlayerRoleInfo(player);
+                                            mafiabot.sendMessage(player.id, `Type **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
+                                        }
+                                        // then send mafia messages
+                                        var mafiaPlayers = _.filter(gameInChannel.players, {faction: 'mafia'});
+                                        for (var i = 0; i < mafiaPlayers.length; i++) {
+                                            var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
+                                            mafiabot.sendMessage(mafiaPlayer, `Use the channel <#${mafiaChannel.id}> to chat with your fellow Mafia team members, and to send in your nightly kill.`);
+                                        }
+                                        mafiabot.syncMessage(mafiaChannel.id, `**Welcome to the mafia team!**\nYour team is:${listUsers(_.map(mafiaPlayers, 'id'))}`);
+                                        mafiabot.syncMessage(mafiaChannel.id, `As a team you have **1 kill each night**. Use the ***${pre}kill*** command (ex: *${pre}kill fool*) to use that ability when I prompt you in this chat.`);
                                     }
-                                    gameInChannel.roleset = roleset.name;
-                                    console.log('Picking roleset:', roleset.name);
-                                    // randomly assign and send roles
-                                    var shuffledRoles = _.shuffle(roleset.roles);
-                                    for (var i = 0; i < gameInChannel.players.length; i++) {
-                                        var player = gameInChannel.players[i];
-                                        player.faction = shuffledRoles[i].faction;
-                                        player.role = shuffledRoles[i].role;
-                                        console.log('    ', player.name, player.faction, player.role);
-                                    }
-                                    for (var i = 0; i < gameInChannel.players.length; i++) {
-                                        var player = gameInChannel.players[i];
-                                        sendPlayerRoleInfo(player);
-                                        mafiabot.sendMessage(player.id, `Type **${pre}confirm** in <#${message.channel.id}> to confirm your participation in the game of mafia hosted by <@${gameInChannel.hostId}>.`);
-                                    }
-                                    // then send mafia messages
-                                    var mafiaPlayers = _.filter(gameInChannel.players, {faction: 'mafia'});
-                                    for (var i = 0; i < mafiaPlayers.length; i++) {
-                                        var mafiaPlayer = _.find(mafiabot.users, {id: mafiaPlayers[i].id});
-                                        mafiabot.sendMessage(mafiaPlayer, `Use the channel <#${mafiaChannel.id}> to chat with your fellow Mafia team members, and to send in your nightly kill.`);
-                                    }
-                                    mafiabot.syncMessage(mafiaChannel.id, `**Welcome to the mafia team!**\nYour team is:${listUsers(_.map(mafiaPlayers, 'id'))}`);
-                                    mafiabot.syncMessage(mafiaChannel.id, `As a team you have **1 kill each night**. Use the ***${pre}kill*** command (ex: *${pre}kill fool*) to use that ability when I prompt you in this chat.`);
-                                }
-                            });
+                                });
+                            } else {
+                                mafiabot.reply(message, `The roleset \`${args[1]}\` is not valid for ${s(gameInChannel.players.length, 'player')}! Use **${pre}rolesets** to view the available rolesets for each player count.`);
+                            }
                         } else {
                             mafiabot.reply(message, `Sorry, there are no available rolesets for ${s(gameInChannel.players.length, 'player')}! Use the **${pre}addroleset** command to add a new roleset for this number of players.`);
                         }
@@ -1333,7 +1350,7 @@ var mainLoop = function() {
             if (game.nightActionReminderTime <= 0) {
                 var remind = (playerName, channelId) => {
                     console.log('Reminding:', playerName);
-                    mafiabot.sendMessage(channelId, `**HEY! *LISTEN!!*** We're waiting for your night action! Remember to use the ***--noaction*** command to confirm you are active, even if you have no night power!`);
+                    mafiabot.sendMessage(channelId, `**HEY! *LISTEN!!*** We're waiting for your night action! Remember to use the ***${pre}noaction*** command to confirm you are active, even if you have no night power!`);
                 }
                 for (var i = 0; i < liveTownPlayers.length; i++) {
                     var player = liveTownPlayers[i];
