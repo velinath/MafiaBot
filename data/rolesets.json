@@ -26,23 +26,6 @@
 		]
 	},
 	{
-		"name": "Shootout",
-		"roles": [
-			{
-				"faction": "independent",
-				"role": "vigilante"
-			},
-			{
-				"faction": "independent",
-				"role": "vigilante"
-			},
-			{
-				"faction": "independent",
-				"role": "vigilante"
-			}
-		]
-	},
-	{
 		"name": "Luck",
 		"roles": [
 			{

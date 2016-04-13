@@ -548,7 +548,7 @@ var baseCommands = [
     },
     {
         commands: ['rolesets'],
-        description: `Show all available role sets names for you to choose with *${pre}startgame*`,
+        description: `Show all available rolesets names for you to choose with *${pre}startgame*`,
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
