@@ -87,8 +87,8 @@ mafiabot.sendMessage = (channelId, content, options, callback) => {
         }
     }
 };
-mafiabot.reply = (channelId, content) => {
-    mafiabot.sendMessage(message.channel.id, message.author + ', ' + content, delay);
+mafiabot.reply = (message, content) => {
+    mafiabot.sendMessage(message.channel.id, message.author + ', ' + content);
 };
 
 // utilities
