@@ -1312,7 +1312,7 @@ var mainLoop = function() {
                 var currMinute = Math.floor(game.timeLimit/(1000*60));
                 if (game.timeLimit <= config.dayTimeLimitWarning && prevMinute != currMinute) {
                     mafiabot.syncMessage(game.channelId, `**WARNING:** Only ***${s(currMinute + 1, 'minute')}*** left until an automatic **No Lynch**! Use ***${pre}extend*** to vote for a ${Math.floor(config.dayTimeLimitExtension/(60*1000))}-minute time limit extension.`);
-                }                
+                }
             }
         }
 
