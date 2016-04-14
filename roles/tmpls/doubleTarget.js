@@ -11,7 +11,7 @@ module.exports = {
         p.player.roleData.noAction = false;
         var output = `It is now night ${p.game.day}! Use the ***${pre}${this.command}*** command with TWO targets to ${this.commandText} (ex: *${pre}${this.command} fool wigs*). ***${pre}cancel*** to cancel.`;
         if (this.mustDoAction) {
-            output += `\n**NOTE**: You MUST take an action every night! You cannot do use the *${pre}noaction* command like other roles.`;
+            output += `\n**NOTE**: You MUST take an action every night! You cannot use the *${pre}noaction* command like other roles.`;
         } else {
             output += `\nUse the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.`;
         }
@@ -69,6 +69,31 @@ module.exports = {
         if (!this.mustDoAction && p.args[0] == 'noaction') {
             p.player.roleData.noAction = true;
             p.mafiabot.reply(p.message, `**You are taking no action tonight.**`);
+        }
+    },
+    onForceNightAction: function(p) {
+        var canDoActionResult = this.canDoAction ? this.canDoAction(p) : true;
+        var possibleTargets = _.filter(p.game.players, 'alive');
+        if (!this.canSelfTarget) {
+            possibleTargets = _.filter(possibleTargets, player => player.id != p.player.id);
+        }
+        if (this.mustDoAction && canDoActionResult === true && possibleTargets.length > 1) {
+            var target1 = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+            possibleTargets = _.filter(possibleTargets, player => player.id != target1.id);
+            var target2 = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+            p.game.nightActions.push({
+                action: this.actionText,
+                playerId: p.player.id,
+                targetId: target1.id,
+            });
+            p.game.nightActions.push({
+                action: this.actionText,
+                playerId: p.player.id,
+                targetId: target2.id,
+            });
+            p.mafiabot.sendMessage(p.player.id, `**The night action time limit ran out, so you are randomly ${this.commandGerund} <@${target1.id}> and <@${target2.id}> tonight!** Hurry up next time...`);
+        } else {
+            p.mafiabot.sendMessage(p.player.id, `**The night action time limit ran out and you were forced to no action!** Hurry up next time...`);
         }
     },
 };

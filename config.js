@@ -7,6 +7,10 @@ if (global.DEBUG) {
         confirmingReminderInterval: 1000*1000,
         nightActionReminderInterval: 15*1000,
         nightActionBufferTime: 1*1000,
+        dayTimeLimit: 3*60*1000,
+        dayTimeLimitWarning: 3*60*1000,
+        dayTimeLimitExtension: 2*60*1000,
+        nightTimeLimit: 2*60*1000,
     };
 }
 module.exports = _.merge({
@@ -22,6 +26,11 @@ module.exports = _.merge({
     mainLoopInterval: 250,
     permissionsInterval: 3000,
     syncMessageTimeout: 2000,
+
+    dayTimeLimit: 15*60*1000,
+    dayTimeLimitWarning: 3*60*1000,
+    dayTimeLimitExtension: 5*60*1000,
+    nightTimeLimit: 5*60*1000,
 
     confirmingReminderInterval: 20*1000,
     nightActionReminderInterval: 60*1000,

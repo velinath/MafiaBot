@@ -1318,15 +1318,14 @@ var mainLoop = function() {
 
         if (game.state == STATE.NIGHT) {
             var livePlayers = _.filter(game.players, 'alive');
-            var liveTownPlayers = _.filter(livePlayers, {faction: 'town'});
 
             // check if all townies and the mafia chat have finished night actions and if so, start the day countdown
-            var allTownNightActionsFinished = _.every(liveTownPlayers, (player) => {
+            var allNightActionsFinished = _.every(livePlayers, (player) => {
                 var result = fireEvent(getRole(player.role).isFinished, {game: game, player: player});
                 return result === null || result === true;
             });
-            allTownNightActionsFinished = allTownNightActionsFinished && game.mafiaDidNightAction;
-            if (allTownNightActionsFinished) {
+            allNightActionsFinished = allNightActionsFinished && game.mafiaDidNightAction;
+            if (allNightActionsFinished) {
                 game.timeToNightActionResolution -= dt;
                 console.log('Time to day:', game.timeToNightActionResolution);
             } else {
@@ -1339,6 +1338,9 @@ var mainLoop = function() {
                 for (var i = 0; i < livePlayers.length; i++) {
                     var player = livePlayers[i];
                     fireEvent(getRole(player.role).onForceNightAction, {game: game, player: player});
+                }
+                if (!game.mafiaDidNightAction) {
+                    mafiabot.sendMessage(game.mafiaChannelId, `**The night action time limit ran out and you were forced to no action!** Hurry up next time...`);
                 }
                 game.timeToNightActionResolution = 0;
             }
@@ -1416,8 +1418,8 @@ var mainLoop = function() {
                     console.log('Reminding:', playerName);
                     mafiabot.sendMessage(channelId, `**HEY! *LISTEN!!*** You have ${s(Math.floor(game.timeLimit/(60*1000)), 'minute')} to register a night action before night ends! Remember to use the ***${pre}noaction*** command to confirm you are active, even if you have no night power!`);
                 }
-                for (var i = 0; i < liveTownPlayers.length; i++) {
-                    var player = liveTownPlayers[i];
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
                     var result = fireEvent(getRole(player.role).isFinished, {game: game, player: player});
                     if (!(result === null || result === true)) {
                         remind(player.name, player.id);
