@@ -161,39 +161,36 @@ var activatedCheck = message => {
 var majorityOf = listOfPlayers => {
     return Math.ceil(listOfPlayers.length / 2 + 0.1);
 }
-var checkForLynch = channelId => {
+var endDay = (channelId, lynchTargetId) => {
     var gameInChannel = _.find(data.games, {channelId: channelId});
     if (gameInChannel) {
-        var votesRequired = majorityOf(_.filter(gameInChannel.players, 'alive'));
-        var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
-        for (var targetId in votesByTarget) {
-            if (votesByTarget[targetId].length >= votesRequired) {
-                mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n\n**!! *THERE IS NO TALKING AT NIGHT* !!**\n\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n\n`);
-                if (targetId == 'NO LYNCH') {
-                    mafiabot.syncMessage(channelId, `No one was lynched.`, 1000);
-                } else {
-                    var lynchedPlayer = _.find(gameInChannel.players, {id: targetId});
-                    fireEvent(getRole(lynchedPlayer.role).onLynched, {game: gameInChannel, player: lynchedPlayer});
-                    mafiabot.syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${getFaction(lynchedPlayer.faction).name} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
-                    lynchedPlayer.alive = false;
-                    lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
-                }
-                gameInChannel.state = STATE.NIGHT;
-                gameInChannel.voteHistory.push({
-                    day: gameInChannel.day,
-                    votes: _.clone(gameInChannel.votes), // clone because the array will be cleared soon
-                });
-                gameInChannel.nightActionReminderTime = config.nightActionReminderInterval;
-                if (!checkForGameOver(channelId)) {
-                    var livePlayers = _.filter(gameInChannel.players, 'alive');
-                    for (var i = 0; i < livePlayers.length; i++) {
-                        var player = livePlayers[i];
-                        fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
-                        printCurrentPlayers(channelId, player.id);
-                    }
+        mafiabot.syncMessage(channelId, `**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n\n**!! *THERE IS NO TALKING AT NIGHT* !!**\n\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n**STOP! STOP! STOP! STOP! STOP! STOP! STOP! STOP!**\n\n`);
+        if (lynchTargetId == 'NO LYNCH') {
+            mafiabot.syncMessage(channelId, `No one was lynched.`, 1000);
+        } else {
+            var lynchedPlayer = _.find(gameInChannel.players, {id: lynchTargetId});
+            fireEvent(getRole(lynchedPlayer.role).onLynched, {game: gameInChannel, player: lynchedPlayer});
+            mafiabot.syncMessage(channelId, `<@${lynchedPlayer.id}>, the **${getFaction(lynchedPlayer.faction).name} ${getRole(lynchedPlayer.role).name}**, was lynched!`, 1000);
+            lynchedPlayer.alive = false;
+            lynchedPlayer.deathReason = 'Lynched D' + gameInChannel.day;
+        }
+        gameInChannel.state = STATE.NIGHT;
+        gameInChannel.voteHistory.push({
+            day: gameInChannel.day,
+            votes: _.clone(gameInChannel.votes), // clone because the array will be cleared soon
+        });
+        gameInChannel.timeLimit = config.nightTimeLimit;
+        gameInChannel.nightActionReminderTime = config.nightActionReminderInterval;
+        if (!checkForGameOver(channelId)) {
+            var livePlayers = _.filter(gameInChannel.players, 'alive');
+            for (var i = 0; i < livePlayers.length; i++) {
+                var player = livePlayers[i];
+                fireEvent(getRole(player.role).onNight, {game: gameInChannel, player: player});
+                printCurrentPlayers(channelId, player.id);
+            }
 
-                    gameInChannel.mafiaDidNightAction = false;
-                    mafiabot.sendMessage(gameInChannel.mafiaChannelId, 
+            gameInChannel.mafiaDidNightAction = false;
+            mafiabot.sendMessage(gameInChannel.mafiaChannelId, 
 `It is now night ${gameInChannel.day}! Use the ***${pre}kill*** command in this chat to choose who the mafia will kill tonight (ex: *${pre}kill fool*). ***${pre}cancel*** to cancel.
 Use the ***${pre}noaction*** command to confirm that you are active but taking no action tonight.
 
@@ -201,11 +198,21 @@ Use the ***${pre}noaction*** command to confirm that you are active but taking n
 
 **NOTE: The person who sends the kill command in this chat will be the one to perform the kill, for role purposes.**
 **ALSO: If you have a power role, you must send me a private message separate from this chat to make that action!**`
-                    );
-                    printCurrentPlayers(channelId, gameInChannel.mafiaChannelId);
-                    
-                    printDayState(channelId);
-                }
+            );
+            printCurrentPlayers(channelId, gameInChannel.mafiaChannelId);
+            
+            printDayState(channelId);
+        }
+    }
+}
+var checkForLynch = channelId => {
+    var gameInChannel = _.find(data.games, {channelId: channelId});
+    if (gameInChannel) {
+        var votesRequired = majorityOf(_.filter(gameInChannel.players, 'alive'));
+        var votesByTarget = _.groupBy(gameInChannel.votes, 'targetId');
+        for (var targetId in votesByTarget) {
+            if (votesByTarget[targetId].length >= votesRequired) {
+                endDay(channelId, targetId);
                 return true;
             }
         }
@@ -648,7 +655,7 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: false,
         onMessage: message => {
-            mafiabot.sendMessage(message.channel, `Admins of MafiaBot:${listUsers(config.admins)}`);
+            mafiabot.sendMessage(message.channel.id, `Admins of MafiaBot:${listUsers(config.admins)}`);
         },
     },
     {
@@ -659,7 +666,7 @@ var baseCommands = [
         onMessage: message => {
             var gameInChannel = _.find(data.games, {channelId: message.channel.id});
             if (gameInChannel) {
-                mafiabot.sendMessage(message.channel, `Host of current game in channel:\n<@${gameInChannel.hostId}>`);
+                mafiabot.sendMessage(message.channel.id, `Host of current game in channel:\n<@${gameInChannel.hostId}>`);
             } else {
                 mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
             }
@@ -771,12 +778,14 @@ var baseCommands = [
                     nightActions: [],
                     nightKills: {},
                     mafiaDidNightAction: false,
+                    timeLimit: config.dayTimeLimit,
+                    votesToExtend: [],
                     permissionsTime: config.permissionsInterval,
                     confirmingReminderTime: config.confirmingReminderInterval,
                     nightActionReminderTime: config.nightActionReminderInterval,
                 };
                 data.games.push(gameInChannel);
-                mafiabot.sendMessage(message.channel, `Starting a game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>!`);
+                mafiabot.sendMessage(message.channel.id, `Starting a game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>!`);
             }
         },
     },
@@ -790,7 +799,7 @@ var baseCommands = [
             var endGame = becauseOf => {
                 _.remove(data.games, gameInChannel);
                 mafiabot.deleteChannel(gameInChannel.mafiaChannelId);
-                mafiabot.sendMessage(message.channel, `${becauseOf} ended game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>! 😥`);
+                mafiabot.sendMessage(message.channel.id, `${becauseOf} ended game of mafia in <#${message.channel.id}> hosted by <@${gameInChannel.hostId}>! 😥`);
 
                 // enable talking just in case it was off
                 var gameChannel = _.find(mafiabot.channels, {id: gameInChannel.channelId});
@@ -813,7 +822,7 @@ var baseCommands = [
                         if (votesRemaining <= 0) {
                             endGame('A majority vote of the players');
                         } else {
-                            mafiabot.sendMessage(message.channel, `There ${s(gameInChannel.votesToEndGame.length, '', 'are', 'is')} currently ${s(gameInChannel.votesToEndGame.length, 'vote')} to end the current game hosted by <@${gameInChannel.hostId}>. ${s(votesRemaining, 'vote')} remaining!`);
+                            mafiabot.sendMessage(message.channel.id, `Currently ${s(gameInChannel.votesToEndGame.length, 'vote')} to end the current game hosted by <@${gameInChannel.hostId}>. ${s(votesRemaining, 'vote')} remaining!`);
                         }
                     }
                 } else {
@@ -892,6 +901,7 @@ var baseCommands = [
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
                         gameInChannel.day = 1;
+                        gameInChannel.timeLimit = config.dayTimeLimit;
                         var livePlayers = _.filter(gameInChannel.players, 'alive');
                         for (var i = 0; i < livePlayers.length; i++) {
                             var player = livePlayers[i];
@@ -1058,6 +1068,34 @@ var baseCommands = [
                     var targetString = vote ? vote.targetId === 'NO LYNCH' ? ' No Lynch' : ` <@${vote.targetId}>` : '... nothing';
                     mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> unvoted${targetString}!`);
                     printCurrentVotes(message.channel.id);
+                }
+            }
+        },
+    },
+    {
+        commands: ['extend'],
+        description: `Vote to extend the day time limit by ${s(Math.floor(config.dayTimeLimitExtension/(60*1000)), 'minute')}`,
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: (message, args) => {
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
+            if (gameInChannel && gameInChannel.state == STATE.DAY) {
+                var player = _.find(gameInChannel.players, {id: message.author.id});
+                if (player && player.alive) {
+                    if (gameInChannel.votesToExtend.indexOf(player.id) >= 0) {
+                        mafiabot.reply(message, `We already know you want to extend the day!`);
+                    } else {
+                        gameInChannel.votesToExtend.push(player.id);
+                        mafiabot.reply(message, `You voted to extend the day time limit!`);
+                        
+                        var votesRemaining = majorityOf(gameInChannel.players) - gameInChannel.votesToExtend.length;
+                        if (votesRemaining <= 0) {
+                            gameInChannel.timeLimit += config.dayTimeLimitExtension;
+                            mafiabot.sendMessage(message.channel.id, `***The day time limit was extended by ${s(Math.floor(config.dayTimeLimitExtension/(60*1000)), 'minute')}!*** How exciting...`);
+                        } else {
+                            mafiabot.sendMessage(message.channel.id, `Currently ${s(gameInChannel.votesToExtend.length, 'vote')} to extend the day. ${s(votesRemaining, 'vote')} remaining!`);
+                        }
+                    }
                 }
             }
         },
@@ -1263,6 +1301,21 @@ var mainLoop = function() {
             }
         }
 
+        if (game.state == STATE.DAY) {
+            // count down to no lynch
+            game.timeLimit -= dt;
+            if (game.timeLimit <= 0) {
+                printCurrentVotes(game.channelId);
+                endDay(game.channelId, 'NO LYNCH');
+            } else {
+                var prevMinute = Math.floor((game.timeLimit + dt)/(1000*60));
+                var currMinute = Math.floor(game.timeLimit/(1000*60));
+                if (game.timeLimit <= config.dayTimeLimitWarning && prevMinute != currMinute) {
+                    mafiabot.syncMessage(game.channelId, `**WARNING:** Only ***${s(currMinute + 1, 'minute')}*** left until an automatic **No Lynch**! Use ***${pre}extend*** to vote for a ${Math.floor(config.dayTimeLimitExtension/(60*1000))}-minute time limit extension.`);
+                }                
+            }
+        }
+
         if (game.state == STATE.NIGHT) {
             var livePlayers = _.filter(game.players, 'alive');
             var liveTownPlayers = _.filter(livePlayers, {faction: 'town'});
@@ -1278,6 +1331,16 @@ var mainLoop = function() {
                 console.log('Time to day:', game.timeToNightActionResolution);
             } else {
                 game.timeToNightActionResolution = config.nightActionBufferTime * (1 + Math.random()/2);
+            }
+            
+            // count down to forcing night action resolution
+            game.timeLimit -= dt;
+            if (game.timeLimit <= 0) {
+                for (var i = 0; i < livePlayers.length; i++) {
+                    var player = livePlayers[i];
+                    fireEvent(getRole(player.role).onForceNightAction, {game: game, player: player});
+                }
+                game.timeToNightActionResolution = 0;
             }
 
             // resolve night actions and begin day after countdown
@@ -1332,6 +1395,7 @@ var mainLoop = function() {
                 game.votes.length = 0;
                 game.nightActions.length = 0;
                 game.nightKills = {};
+                game.timeLimit = config.dayTimeLimit;
                 mafiabot.syncMessage(game.channelId, `**All players have finished night actions!**`);
                 mafiabot.syncMessage(game.channelId, `***${s(deadPlayers.length, 'player', 's have', ' has')} died.***`, 1000);
                 for (var i = 0; i < deadPlayers.length; i++) {
@@ -1350,7 +1414,7 @@ var mainLoop = function() {
             if (game.nightActionReminderTime <= 0) {
                 var remind = (playerName, channelId) => {
                     console.log('Reminding:', playerName);
-                    mafiabot.sendMessage(channelId, `**HEY! *LISTEN!!*** We're waiting for your night action! Remember to use the ***${pre}noaction*** command to confirm you are active, even if you have no night power!`);
+                    mafiabot.sendMessage(channelId, `**HEY! *LISTEN!!*** You have ${s(Math.floor(game.timeLimit/(60*1000)), 'minute')} to register a night action before night ends! Remember to use the ***${pre}noaction*** command to confirm you are active, even if you have no night power!`);
                 }
                 for (var i = 0; i < liveTownPlayers.length; i++) {
                     var player = liveTownPlayers[i];
