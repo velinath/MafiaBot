@@ -804,7 +804,7 @@ var baseCommands = [
                 // enable talking just in case it was off
                 var gameChannel = _.find(mafiabot.channels, {id: gameInChannel.channelId});
                 var everyoneId = _.find(gameChannel.server.roles, {name: "@everyone"}).id;
-                mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: true });
+                mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: true, mentionEveryone: false });
             };
             if (gameInChannel) {
                 if (gameInChannel.hostId == message.author.id) {
@@ -1250,12 +1250,12 @@ var mainLoop = function() {
             var everyoneId = _.find(gameChannel.server.roles, {name: "@everyone"}).id;
             if (game.state != STATE.NIGHT) {
                 // everyone can talk
-                mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: true });
+                mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: true, mentionEveryone: false });
             } else {
                 // everyone can't talk
                 mafiabot.overwritePermissions(gameChannel, mafiabot.user, { managePermissions: true }, (error) => {
                     if (!error) {
-                        mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: false, managePermissions: false });
+                        mafiabot.overwritePermissions(gameChannel, everyoneId, { sendMessages: false, managePermissions: false, mentionEveryone: false });
                     }
                 });
                 // host can talk
@@ -1268,7 +1268,7 @@ var mainLoop = function() {
                     // mafia chat blocked to all
                     mafiabot.overwritePermissions(mafiaChannel, mafiabot.user, { managePermissions: true }, (error) => {
                         if (!error) {
-                            mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false });
+                            mafiabot.overwritePermissions(mafiaChannel, everyoneId, { readMessages: false, sendMessages: false, managePermissions: false, mentionEveryone: false });
                         }
                     });
                     // mafia players can chat in mafia chat
@@ -1390,8 +1390,6 @@ var mainLoop = function() {
                     }
                 }
                 // start day
-                var gameChannel = _.find(mafiabot.channels, {id: game.channelId});
-                var everyoneId = _.find(gameChannel.server.roles, {name: "@everyone"}).id;
                 game.state = STATE.DAY;
                 game.day++;
                 game.votes.length = 0;
