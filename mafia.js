@@ -381,7 +381,7 @@ var printUnconfirmedPlayers = (channelId, outputChannelId) => {
     if (gameInChannel) {
         var unconfirmedPlayers = _.filter(gameInChannel.players, {confirmed: false});
         var output = unconfirmedPlayers.length 
-            ? `**${s(unconfirmedPlayers.length, 'player')}** still must ***${pre}confirm*** for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
+            ? `**${s(unconfirmedPlayers.length, 'player')}** still must type ***${pre}confirm*** (**IN THIS CHANNEL, NOT PM***) for game hosted by <@${gameInChannel.hostId}>:${listUsers(_.map(unconfirmedPlayers, 'id'))}`
             : `All players confirmed for game hosted by <@${gameInChannel.hostId}>!`
             ;
         mafiabot.syncMessage(outputChannelId || channelId, output);
