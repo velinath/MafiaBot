@@ -746,7 +746,46 @@ var baseCommands = [
                     }
                     mafiabot.sendMessage(message.channel.id, output);
                 } else {
-                    mafiabot.sendMessage(message.channel.id, output || `There's no vote history yet!`);
+                    mafiabot.reply(message, `There's no vote history yet!`);
+                }
+            } else {
+                mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
+            }
+        },
+    },
+    {
+        commands: ['votelog'],
+        description: 'Show a detailed log of every vote made for the game in channel',
+        adminOnly: false,
+        activatedOnly: true,
+        onMessage: message => {
+            var gameInChannel = _.find(data.games, {channelId: message.channel.id});
+            if (gameInChannel) {
+                if (gameInChannel.voteLog.length > 1) {
+                    var output = ``;
+                    var day = 0;
+                    var n = 1;
+                    for (var i = 0; i < gameInChannel.voteLog.length; i++) {
+                        var log = gameInChannel.voteLog[i];
+                        if (log.day != null) {
+                            output += `***Day ${log.day}:*** `;
+                            n = 0;
+                        } else if (log.targetName === null) {
+                            output += `${n}. \`${log.playerName}\` NL`;
+                        } else {
+                            output += `${n}. \`${log.playerName}\` -> \`${log.targetName}\``;
+                        }
+                        n++;
+                        if (i != gameInChannel.voteLog.length - 1) {
+                            output += `\n`;
+                            if (gameInChannel.voteLog[i + 1].day != null) {
+                                output += `\n`;
+                            }
+                        }
+                    }
+                    mafiabot.sendMessage(message.channel.id, output);
+                } else {
+                    mafiabot.reply(message, `There's no vote logs yet!`);
                 }
             } else {
                 mafiabot.reply(message, `There's no game currently running in <#${message.channel.id}>!`);
@@ -775,6 +814,7 @@ var baseCommands = [
                     day: 0,
                     votes: [],
                     voteHistory: [],
+                    voteLog: [],
                     nightActions: [],
                     nightKills: {},
                     mafiaDidNightAction: false,
@@ -901,6 +941,7 @@ var baseCommands = [
                     } else if (gameInChannel.state == STATE.READY) {
                         gameInChannel.state = STATE.DAY;
                         gameInChannel.day = 1;
+                        gameInChannel.voteLog.push({day: gameInChannel.day});
                         gameInChannel.timeLimit = config.dayTimeLimit;
                         var livePlayers = _.filter(gameInChannel.players, 'alive');
                         for (var i = 0; i < livePlayers.length; i++) {
@@ -1021,6 +1062,7 @@ var baseCommands = [
                         } else {
                             _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                             gameInChannel.votes.push({playerId: message.author.id, targetId: target.id, time: new Date()});
+                            gameInChannel.voteLog.push({playerName: message.author.name, targetName: target.name});
                             mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> voted to lynch <@${target.id}>!`);
 
                             printCurrentVotes(message.channel.id);
@@ -1045,6 +1087,7 @@ var baseCommands = [
                 if (player && player.alive) {
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                     gameInChannel.votes.push({playerId: message.author.id, targetId: 'NO LYNCH', time: new Date()});
+                    gameInChannel.voteLog.push({playerName: message.author.name, targetName: null});
                     mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> voted to No Lynch!`);
 
                     printCurrentVotes(message.channel.id);
@@ -1393,6 +1436,7 @@ var mainLoop = function() {
                 game.state = STATE.DAY;
                 game.day++;
                 game.votes.length = 0;
+                game.voteLog.push({day: game.day});
                 game.nightActions.length = 0;
                 game.nightKills = {};
                 game.timeLimit = config.dayTimeLimit;
