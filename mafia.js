@@ -436,7 +436,7 @@ var baseCommands = [
         activatedOnly: false,
         onMessage: message => {
             var gameInChannel = _.find(data.games, {channelId: message.channel.id});
-            var output = `## Server: ${message.channel.server.name} | Channel: ${message.channel.name} | User: ${message.author.name} | Roleset: ${gameInChannel ? gameInChannel.roleset : 'N/A'} | ${new Date()} | ${new Date(message.timestamp)} ##\n${message.content.substring(11)}\n\n`;
+            var output = `## Server: ${message.channel.server ? message.channel.server.name : 'PM'} | Channel: ${message.channel.name || 'N/A'} | User: ${message.author.name} | Roleset: ${gameInChannel ? gameInChannel.roleset : 'N/A'} | ${new Date()} | ${new Date(message.timestamp)} ##\n${message.content.substring(11)}\n\n`;
             fs.appendFile(config.feedbackFilePath, output);
             mafiabot.reply(message, `Thanks for the feedback! ❤`);
         },
