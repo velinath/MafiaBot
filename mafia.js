@@ -1137,6 +1137,7 @@ var baseCommands = [
                         var votesRemaining = majorityOf(gameInChannel.players) - gameInChannel.votesToExtend.length;
                         if (votesRemaining <= 0) {
                             gameInChannel.timeLimit += config.dayTimeLimitExtension;
+                            gameInChannel.votesToExtend.length = 0;
                             mafiabot.sendMessage(message.channel.id, `***The day time limit was extended by ${s(Math.floor(config.dayTimeLimitExtension/(60*1000)), 'minute')}!*** How exciting...`);
                         } else {
                             mafiabot.sendMessage(message.channel.id, `Currently ${s(gameInChannel.votesToExtend.length, 'vote')} to extend the day. ${s(votesRemaining, 'vote')} remaining!`);
