@@ -27,7 +27,7 @@ module.exports = _.merge({
     permissionsInterval: 3000,
     syncMessageTimeout: 2000,
 
-    dayTimeLimit: 15*60*1000,
+    dayTimeLimit: 10*60*1000,
     dayTimeLimitWarning: 3*60*1000,
     dayTimeLimitExtension: 5*60*1000,
     nightTimeLimit: 5*60*1000,

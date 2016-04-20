@@ -11,7 +11,7 @@ module.exports = ext(require('./tmpls/singleTarget.js'), {
     commandText: 'watch a target to see who targets them',
     actionText: 'watcher watch',
     onActionPhase: function(p) {
-        var action = _.find(p.game.nightActions, {action: self.actionText, playerId: p.player.id});
+        var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         if (action) {
             var playersActingOnTarget = _.uniq(_.filter(p.game.nightActions, {targetId: action.targetId}).map(act => act.playerId));
             if (playersActingOnTarget.length) {

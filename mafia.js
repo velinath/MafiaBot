@@ -770,8 +770,10 @@ var baseCommands = [
                         if (log.day != null) {
                             output += `***Day ${log.day}:*** `;
                             n = 0;
-                        } else if (log.targetName === null) {
+                        } else if (log.targetName === 'NL') {
                             output += `${n}. \`${log.playerName}\` NL`;
+                        } else if (log.targetName === null) {
+                            output += `${n}. \`${log.playerName}\` un`;
                         } else {
                             output += `${n}. \`${log.playerName}\` -> \`${log.targetName}\``;
                         }
@@ -1087,7 +1089,7 @@ var baseCommands = [
                 if (player && player.alive) {
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
                     gameInChannel.votes.push({playerId: message.author.id, targetId: 'NO LYNCH', time: new Date()});
-                    gameInChannel.voteLog.push({playerName: message.author.name, targetName: null});
+                    gameInChannel.voteLog.push({playerName: message.author.name, targetName: 'NL'});
                     mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> voted to No Lynch!`);
 
                     printCurrentVotes(message.channel.id);
@@ -1108,6 +1110,7 @@ var baseCommands = [
                 if (player && player.alive) {
                     var vote = _.find(gameInChannel.votes, {playerId: message.author.id});
                     _.pullAllBy(gameInChannel.votes, [{playerId: message.author.id}], 'playerId');
+                    gameInChannel.voteLog.push({playerName: message.author.name, targetName: null});
                     var targetString = vote ? vote.targetId === 'NO LYNCH' ? ' No Lynch' : ` <@${vote.targetId}>` : '... nothing';
                     mafiabot.syncMessage(message.channel.id, `<@${message.author.id}> unvoted${targetString}!`);
                     printCurrentVotes(message.channel.id);
