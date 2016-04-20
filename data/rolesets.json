@@ -145,6 +145,10 @@
 				"role": "vanilla"
 			},
 			{
+				"faction": "town",
+				"role": "vanilla"
+			},
+			{
 				"faction": "mafia",
 				"role": "roleblocker"
 			},
@@ -164,6 +168,10 @@
 			{
 				"faction": "town",
 				"role": "doctor"
+			},
+			{
+				"faction": "town",
+				"role": "vanilla"
 			},
 			{
 				"faction": "town",
