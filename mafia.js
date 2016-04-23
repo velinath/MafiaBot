@@ -1510,11 +1510,17 @@ mafiabot.login(config.email, config.password, (error, token) => {
         process.exit(1);
     }
     // wait for channels to be cached first or else there will be weird bugs
+    var loginChecks = 0;
     var checkForChannelsThenKickoff = () => {
         if (mafiabot.channels.length) {
             mainLoop(0);
         } else {
-            setTimeout(checkForChannelsThenKickoff, 100);
+            loginChecks++;
+            if (loginChecks >= config.loginChecksBeforeRebooting) {
+                throw "Failed login check - rebooting!";
+            } else {
+                setTimeout(checkForChannelsThenKickoff, 100);
+            }
         }
     }
     checkForChannelsThenKickoff();
