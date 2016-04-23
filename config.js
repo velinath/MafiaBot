@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const creds = require('./creds.js');
 
 var overrides = {};
 if (global.DEBUG) {
@@ -14,8 +15,8 @@ if (global.DEBUG) {
     };
 }
 module.exports = _.merge({
-    email: 'EMAIL',
-    password: 'PASSWORD',
+    email: creds.email,
+    password: creds.password,
     admins: [
         '88020438474567680', // fool
     ],
