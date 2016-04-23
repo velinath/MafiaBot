@@ -23,6 +23,8 @@ module.exports = _.merge({
     dataJSONPath: 'data/data.json',
     rolesetJSONPath: 'data/rolesets.json',
 
+    autoRebootInterval: 60*60*1000,
+
     mainLoopInterval: 250,
     permissionsInterval: 3000,
     syncMessageTimeout: 2000,
