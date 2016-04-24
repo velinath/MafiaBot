@@ -1259,6 +1259,10 @@ mafiabot.on("message", message => {
     saveData(data);
 });
 
+mafiabot.on("disconnected", () => {
+    throw "Disconnected - rebooting!";
+});
+
 // main loop
 var t = new Date();
 var mainLoop = function() {
