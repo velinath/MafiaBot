@@ -21,7 +21,7 @@ module.exports = {
         if (p.game.state != STATE.NIGHT) {
             return;
         }
-        if (p.args[0] == this.command) {
+        if (p.args[0].toLowerCase() == this.command) {
             var canDoActionResult = this.canDoAction ? this.canDoAction(p) : true;
             if (canDoActionResult === true) {
                 var target1 = closestPlayer(p.args[1], p.game.players);
@@ -58,7 +58,7 @@ module.exports = {
             } else {
                 p.mafiabot.reply(p.message, `You can't ${this.command} tonight. ${canDoActionResult}`);
             }
-        } else if (p.args[0] == 'cancel' || (!this.mustDoAction && p.args[0] == 'noaction')) {
+        } else if (p.args[0].toLowerCase() == 'cancel' || (!this.mustDoAction && p.args[0].toLowerCase() == 'noaction')) {
             var action = _.find(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
             if (action) {
                 p.player.roleData.didAction = false;
@@ -66,7 +66,7 @@ module.exports = {
             }
             p.game.nightActions = _.reject(p.game.nightActions, {action: this.actionText, playerId: p.player.id});
         }
-        if (!this.mustDoAction && p.args[0] == 'noaction') {
+        if (!this.mustDoAction && p.args[0].toLowerCase() == 'noaction') {
             p.player.roleData.noAction = true;
             p.mafiabot.reply(p.message, `**You are taking no action tonight.**`);
         }
