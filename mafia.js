@@ -31,7 +31,6 @@ var data = _.merge({
     signals: [],
     pmChannels: [],
     games: [],
-    autoRebootTime: config.autoRebootInterval,
 }, getData());
 saveData(data);
 var mafiabot = new Discord.Client();
@@ -1487,23 +1486,9 @@ var mainLoop = function() {
         game.previousState = game.state;
     }
 
-    // reboot bot every once in a while because discord will auto disconnect it for some reason
-    data.autoRebootTime -= dt;
-    var shouldReboot = data.autoRebootTime <= 0;
-    if (shouldReboot) {
-        // reset the reboot timer before the save
-        data.autoRebootTime = config.autoRebootInterval;
-    }
-
-
     // save and wait for next loop
     saveData(data);
     setTimeout(mainLoop, Math.max(config.mainLoopInterval - (new Date() - now), 0));
-
-    // do the reboot after the save
-    if (shouldReboot) {
-        throw "Auto-rebooting!";
-    }
 };
 
 // login and kick off main loop after everything is set up
