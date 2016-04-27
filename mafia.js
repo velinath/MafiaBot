@@ -1222,7 +1222,7 @@ mafiabot.on("message", message => {
         var player = _.find(game.players, {id: message.author.id});
         var actionText = 'mafia kill';
         if (game.state == STATE.NIGHT && player && player.alive) {
-            if (args[0] == 'kill') {
+            if (args[0].toLowerCase() == 'kill') {
                 var target = closestPlayer(args[1], game.players);
                 if (target && target.alive) {
                     game.nightActions = _.reject(game.nightActions, {action: actionText}); // clear any mafia kill, not just the current player's
@@ -1237,14 +1237,14 @@ mafiabot.on("message", message => {
                 } else {
                     mafiabot.reply(message, `*${args[1]}* is not a valid target!`);
                 }
-            } else if (args[0] == 'cancel' || args[0] == 'noaction') {
+            } else if (args[0].toLowerCase() == 'cancel' || args[0].toLowerCase() == 'noaction') {
                 var action = _.find(game.nightActions, {action: actionText});
                 if (action) {
                     game.mafiaDidNightAction = false;
                     mafiabot.reply(message, `**You have canceled killing *${_.find(game.players, {id: action.targetId}).name}*.**`);
                 }
                 game.nightActions = _.reject(game.nightActions, {action: actionText});
-                if (args[0] == 'noaction') {
+                if (args[0].toLowerCase() == 'noaction') {
                     game.mafiaDidNightAction = true;
                     mafiabot.reply(message, `**You are taking no action tonight.**`);
                 }
