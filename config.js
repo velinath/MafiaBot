@@ -15,8 +15,6 @@ if (global.DEBUG) {
     };
 }
 module.exports = _.merge({
-    email: creds.email,
-    password: creds.password,
     admins: [
         '88020438474567680', // fool
     ],
@@ -39,4 +37,4 @@ module.exports = _.merge({
     confirmingReminderInterval: 20*1000,
     nightActionReminderInterval: 60*1000,
     nightActionBufferTime: 20*1000,
-}, overrides);
+}, creds, overrides);

@@ -1507,10 +1507,10 @@ var mainLoop = function() {
 };
 
 // login and kick off main loop after everything is set up
-mafiabot.login(config.email, config.password, (error, token) => {
+mafiabot.loginWithToken(config.token, null, null, (error, token) => {
     // crash on login error
     if (error) {
-        console.log(error.response.error.text);
+        console.log(error.stack || error.response.error.text);
         process.exit(1);
     }
     // wait for channels to be cached first or else there will be weird bugs
