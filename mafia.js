@@ -493,11 +493,11 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var signalsForChannel = _.find(data.signals, {channelId: message.channel.id});
-            if (signalsForChannel && signalsForChannel.playerIds.length) {
-                mafiabot.sendMessage(message.channel.id, `**HEY! Let's play some MAFIA!** (use the *${pre}joinsignal* command to join this list)\n${signalsForChannel.playerIds.map((id) => `<@${id}>`).join(' ')}`);
+            var signalsForServer = _.find(data.signals, {serverId: message.channel.server.id});
+            if (signalsForServer && signalsForServer.playerIds.length) {
+                mafiabot.sendMessage(message.channel.id, `**HEY! Let's play some MAFIA!** (use the *${pre}joinsignal* command to join this list)\n${signalsForServer.playerIds.map((id) => `<@${id}>`).join(' ')}`);
             } else {
-                mafiabot.reply(message, `There's no one in the signal group for channel <#${message.channel.id}>! Use the *${pre}joinsignal* command to join it.`);
+                mafiabot.reply(message, `There's no one in the signal group for server \`${message.channel.server.name}\`! Use the *${pre}joinsignal* command to join it.`);
             }
         },
     },
@@ -507,20 +507,20 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var signalsForChannel = _.find(data.signals, {channelId: message.channel.id});
-            if (!signalsForChannel) {
-                signalsForChannel = {
-                    channelId: message.channel.id,
+            var signalsForServer = _.find(data.signals, {serverId: message.channel.server.id});
+            if (!signalsForServer) {
+                signalsForServer = {
+                    serverId: message.channel.server.id,
                     playerIds: [],
                 }
-                data.signals.push(signalsForChannel);
+                data.signals.push(signalsForServer);
             }
-            var prevLength = signalsForChannel.playerIds.length;
-            signalsForChannel.playerIds = _.uniq(signalsForChannel.playerIds.concat(message.author.id));
-            if (signalsForChannel.playerIds.length != prevLength) {
-                mafiabot.reply(message, `You have been added to the mafia signal for channel <#${message.channel.id}>! Use the *${pre}signal* command to ping everyone in the signal group.`);
+            var prevLength = signalsForServer.playerIds.length;
+            signalsForServer.playerIds = _.uniq(signalsForServer.playerIds.concat(message.author.id));
+            if (signalsForServer.playerIds.length != prevLength) {
+                mafiabot.reply(message, `You have been added to the mafia signal for server \`${message.channel.server.name}\`! Use the *${pre}signal* command to ping everyone in the signal group.`);
             } else {
-                mafiabot.reply(message, `You're already in the signal group for channel <#${message.channel.id}>!`);
+                mafiabot.reply(message, `You're already in the signal group for server \`${message.channel.server.name}\`!`);
             }
         },
     },
@@ -530,17 +530,17 @@ var baseCommands = [
         adminOnly: false,
         activatedOnly: true,
         onMessage: message => {
-            var signalsForChannel = _.find(data.signals, {channelId: message.channel.id});
-            if (signalsForChannel) {
-                var prevLength = signalsForChannel.playerIds.length;
-                _.pull(signalsForChannel.playerIds, message.author.id);
-                if (signalsForChannel.playerIds.length != prevLength) {
-                    mafiabot.reply(message, `You have been removed from the mafia signal for channel <#${message.channel.id}>!`);
+            var signalsForServer = _.find(data.signals, {serverId: message.channel.server.id});
+            if (signalsForServer) {
+                var prevLength = signalsForServer.playerIds.length;
+                _.pull(signalsForServer.playerIds, message.author.id);
+                if (signalsForServer.playerIds.length != prevLength) {
+                    mafiabot.reply(message, `You have been removed from the mafia signal for server \`${message.channel.server.name}\`!`);
                 } else {
-                    mafiabot.reply(message, `You're not even in the signal group for channel <#${message.channel.id}>!`);
+                    mafiabot.reply(message, `You're not even in the signal group for server \`${message.channel.server.name}\`!`);
                 }
             } else {
-                mafiabot.reply(message, `There's no one in the signal group for channel <#${message.channel.id}>! Use the *${pre}joinsignal* command to join it.`);
+                mafiabot.reply(message, `There's no one in the signal group for server \`${message.channel.server.name}\`! Use the *${pre}joinsignal* command to join it.`);
             }
         },
     },
