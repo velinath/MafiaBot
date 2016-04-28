@@ -1134,7 +1134,7 @@ var baseCommands = [
                         gameInChannel.votesToExtend.push(player.id);
                         mafiabot.reply(message, `You voted to extend the day time limit!`);
                         
-                        var votesRemaining = majorityOf(gameInChannel.players) - gameInChannel.votesToExtend.length;
+                        var votesRemaining = majorityOf(_.filter(gameInChannel.players, 'alive')) - gameInChannel.votesToExtend.length;
                         if (votesRemaining <= 0) {
                             gameInChannel.timeLimit += config.dayTimeLimitExtension;
                             gameInChannel.votesToExtend.length = 0;
