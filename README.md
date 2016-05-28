@@ -15,7 +15,11 @@ Setup all the required values in `config.js`
 ## Run
 
 ```sh
-$ node --harmony_rest_parameters mafia.js
+$ npm start
+```
+or
+```sh
+$ node --harmony_rest_parameters mafia-release.js
 ```
 The app uses the Rest Parameters feature so make sure that flag is set. The app will crash immediately if it's not set, so it should be easy to catch.
 
