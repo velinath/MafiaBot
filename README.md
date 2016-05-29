@@ -4,6 +4,7 @@ A Discord bot for playing mafia
 
 ## Install
 
+Download [node.js](https://nodejs.org) version **v0.5.8 or higher**, then go to MafiaBot folder and:  
 ```sh
 $ npm install
 ```
