@@ -396,7 +396,7 @@ var printDayState = (channelId, outputChannelId) => {
         if (gameInChannel.state == STATE.DAY) {
             output += `\n**${_.filter(gameInChannel.players, 'alive').length} alive, ${majorityOf(_.filter(gameInChannel.players, 'alive'))} to lynch!**\nUse ${pre}vote, ${pre}NL, and ${pre}unvote commands to vote.`;
         } else {
-            output += `\n**Send in your night actions via PM. Every player must send in a night action, regardless of role!**.`;
+            output += `\n**Send in your night actions via PM. Every player must check their PMs, regardless of role!**.`;
         }
         mafiabot.syncMessage(outputChannelId || channelId, output);
         return true;
