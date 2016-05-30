@@ -1,6 +1,8 @@
 # MafiaBot
 
-A Discord bot for playing mafia
+A Discord bot for playing mafia  
+
+Join our public Mafia server if you want to try out the bot: http://discord.me/mafia
 
 ## Install
 
