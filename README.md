@@ -13,7 +13,8 @@ $ npm install
 
 ## Config
 
-Setup all the required values in `config.js`
+Setup all the admin user ID values in `config.js`  
+Setup the bot's user token in `creds.js` (follow the [Discord developer guide](https://discordapp.com/developers/docs/intro) to get the token)  
 
 ## Run
 
