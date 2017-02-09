@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "Discord bot for playing Mafia",
   "scripts": {
-    "start": "node --harmony_rest_parameters mafia-release.js"
+    "start": "node mafia-release.js"
   },
   "main": "mafia.js",
   "repository": {
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/foolmoron/MafiaBot#readme",
   "engine": {
-    "node": ">= 0.5.8"
+    "node": ">= 7.0.0"
   },
   "dependencies": {
     "discord.js": "^7.0.1",

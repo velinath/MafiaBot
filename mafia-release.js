@@ -1,5 +1,8 @@
 global.RELEASE = true;
 var d = require('domain').create()
+process.on('unhandledRejection', (reason) => {
+    console.trace('Reason: ' + reason);
+});
 var mafiabot = null;
 d.on('error', function(e) {
     if (e.stack) {
